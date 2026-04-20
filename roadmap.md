@@ -12,7 +12,7 @@ Build a multi-agent deep research system with FastAPI backend, SSE streaming, an
 - Basic endpoint structure (health check, submit query)
 - Unit test setup with pytest
 - progress.md initialized
-- **Status: NOT STARTED**
+- **Status: COMPLETE** (branch `leo/project-scaffolding`, 10 tests passing, needs merge to main)
 
 ### M2: Multi-Agent Research Pipeline (Budget: 6 cycles)
 - Research orchestrator agent that decomposes queries into sub-tasks
@@ -20,7 +20,7 @@ Build a multi-agent deep research system with FastAPI backend, SSE streaming, an
 - Agent communication and result aggregation
 - SSE streaming for real-time progress updates
 - Integration tests
-- **Status: NOT STARTED**
+- **Status: IN PROGRESS**
 
 ### M3: Frontend UI & End-to-End Integration (Budget: 4 cycles)
 - Simple web UI (HTML/JS or lightweight framework)
@@ -39,4 +39,4 @@ Build a multi-agent deep research system with FastAPI backend, SSE streaming, an
 - **Status: NOT STARTED**
 
 ## Lessons Learned
-- (none yet — project just started)
+- M1 completed efficiently in first cycle. Scaffolding is solid and clean.
