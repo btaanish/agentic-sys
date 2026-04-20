@@ -67,7 +67,20 @@ Build a multi-agent deep research system that performs iterative information dis
 - UI updates: display sub-questions, evidence with credibility scores, contradictions, confidence levels during research
 - Parse and render structured result sections in the frontend (not just plain text)
 - End-to-end integration testing (10+ new tests)
-- **Status: IN PROGRESS**
+- **Status: IN PROGRESS** (branch ares/m9-final, 140 tests passing, 3 bugs fixed)
+- Apollo verification: Tests PASS, summary.md PASS, frontend PASS, but SSE contract review found 2 remaining gaps:
+  - GAP 1: exploration_angles from state_updates not consumed by frontend (only shows agent names)
+  - GAP 2: contradictions from state_updates not surfaced during research progress (only in final result)
+- Fix round needed for 2 gaps, then merge to main
+
+### M10: Final Fix & Merge (Budget: 2 cycles)
+- Fix 2 remaining frontend gaps from M9 verification
+- GAP 1: Frontend should parse and display exploration_angles from state_update events (not just agent names)
+- GAP 2: Frontend should parse and display contradictions from state_update events during research
+- Merge ares/m9-final to main via PR
+- Verify all 140+ tests still pass after fixes
+- Update summary.md with final commits
+- **Status: COMPLETE** (both gaps fixed by Sam, 140 tests passing, Apollo verified PASS)
 
 ## Lessons Learned
 - Phase 1 (M1-M4) built solid scaffolding efficiently. Code is modular and well-tested.

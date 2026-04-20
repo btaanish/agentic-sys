@@ -300,8 +300,10 @@ class ResearchOrchestrator:
                         "max_iterations": self.max_iterations,
                         "avg_confidence": avg_conf,
                         "confidence_per_sub_question": state.confidence_scores,
-                        "remaining_gaps": len(state.unresolved_issues),
+                        "remaining_gaps": list(state.unresolved_issues),
                         "pending_actions": len(state.next_actions),
+                        "exploration_angles": state.exploration_angles,
+                        "contradictions": state.contradictions,
                     }),
                 })
 
