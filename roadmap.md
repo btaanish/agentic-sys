@@ -39,7 +39,7 @@ Build a multi-agent deep research system with FastAPI backend, SSE streaming, an
 - Comprehensive test coverage for add-on features
 - progress.md fully updated with M4 components
 - Final code cleanup and quality pass
-- **Status: NOT STARTED**
+- **Status: COMPLETE** (PRs #5, #6, #7 merged; 45 tests passing; API token validated; all add-ons implemented)
 
 ## Lessons Learned
 - M1 completed efficiently in first cycle. Scaffolding is solid and clean.
@@ -47,3 +47,7 @@ Build a multi-agent deep research system with FastAPI backend, SSE streaming, an
 - Combined README into M3 to avoid M4 becoming too thin. M4 now focuses on polish and add-ons per spec requirements.
 - M3 had a high-severity SSE field mismatch bug (frontend used `event.type`/`event.content` but backend emits `event.event`/`event.data`). Caught by Vera during verification, fixed by Leo. Lesson: always add regression tests for frontend-backend contract mismatches.
 - Quinn's blind audit confirmed all M3 acceptance criteria met. Independent verification is valuable.
+- M4 completed efficiently. All add-ons (query history, export/copy, loading spinner) implemented and tested. API token validated (authenticates correctly). Total: 45 tests across 10 test files.
+
+## Final Status
+All 4 milestones completed. Project meets spec requirements: multi-agent deep research system with FastAPI + SSE, web UI, API token input, add-ons, tests, README, and progress tracking.
