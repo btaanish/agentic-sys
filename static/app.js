@@ -245,7 +245,7 @@ document.addEventListener("DOMContentLoaded", function () {
         var div = document.createElement("div");
         div.className = "sq-item";
         div.setAttribute("data-index", i);
-        div.innerHTML = '<span class="sq-check"></span><span class="sq-text">' + escapeHtml(data.sub_questions[i]) + "</span>";
+        div.innerHTML = '<span class="sq-check"></span><span class="sq-text">' + escapeHtml(data.sub_questions[i].text) + "</span>";
         subQuestionsList.appendChild(div);
       }
     }
@@ -274,13 +274,9 @@ document.addEventListener("DOMContentLoaded", function () {
       if (data.confidence_per_sub_question) {
         var sqItems = subQuestionsList.querySelectorAll(".sq-item");
         for (var j = 0; j < sqItems.length; j++) {
-          var text = sqItems[j].querySelector(".sq-text").textContent;
-          for (var k in data.confidence_per_sub_question) {
-            if (text.indexOf(k) !== -1 || k.indexOf(text) !== -1) {
-              if (data.confidence_per_sub_question[k] >= 0.8) {
-                sqItems[j].classList.add("sq-done");
-              }
-            }
+          var idx = sqItems[j].getAttribute("data-index");
+          if (data.confidence_per_sub_question[idx] !== undefined && data.confidence_per_sub_question[idx] >= 0.8) {
+            sqItems[j].classList.add("sq-done");
           }
         }
       }
