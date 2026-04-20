@@ -21,7 +21,7 @@ Build a multi-agent deep research system that performs iterative information dis
 - Query history, export/copy, loading spinner, API token validation
 - **Status: COMPLETE** (PRs #5, #6, #7 merged; 45 tests passing)
 
-## Phase 2 Milestones (Core Agentic Intelligence — IN PROGRESS)
+## Phase 2 Milestones (Core Agentic Intelligence — NEAR COMPLETE)
 
 ### M5: Shared Research State & Parallel Agent Execution (Budget: 6 cycles)
 - ResearchState data structure with subquestions, evidence, confidence scores, unresolved issues, dead ends, next actions
@@ -58,14 +58,16 @@ Build a multi-agent deep research system that performs iterative information dis
 - Contradiction detection: identify conflicting sources, analyze reasons, trigger resolution
 - Uncertainty tracking with confidence levels in final output
 - Tests for multi-angle coverage and contradiction detection
-- **Status: IN PROGRESS** (branch ares/cross-angle, 128 tests passing, implementation complete, awaiting PR + verification)
+- **Status: COMPLETE** (PR #9 merged, 128 tests passing, 2 cycles used)
+- Verified: All 3 Apollo verifiers PASSED — data models, orchestrator logic, and tests all confirmed
 
 ### M9: Synthesis Enhancement, summary.md & Final Polish (Budget: 4 cycles)
-- Enhanced synthesis: coherent answer + supporting evidence + remaining uncertainty + confidence assessment
+- Enhanced synthesis output: structured JSON with sections (findings, evidence, contradictions, uncertainty, confidence)
 - Create summary.md tracking each commit and new file (per spec requirement)
-- UI updates to display research state, confidence levels, and evidence quality
-- End-to-end integration testing
-- **Status: PENDING**
+- UI updates: display sub-questions, evidence with credibility scores, contradictions, confidence levels during research
+- Parse and render structured result sections in the frontend (not just plain text)
+- End-to-end integration testing (10+ new tests)
+- **Status: IN PROGRESS**
 
 ## Lessons Learned
 - Phase 1 (M1-M4) built solid scaffolding efficiently. Code is modular and well-tested.
@@ -78,3 +80,4 @@ Build a multi-agent deep research system that performs iterative information dis
 - Budget accuracy improving: M6 estimated 6 cycles, used 2. Can tighten Phase 2 estimates.
 - M7 also completed in 2 cycles (budgeted 5). Verification clean — all 3 verifiers PASS on first attempt. Team is executing efficiently.
 - Reducing M8 budget to 4 cycles (from 6) based on consistent over-budgeting pattern.
+- M8 completed in 2 cycles (budgeted 4). Team continues to execute efficiently. M9 is the final milestone — keeping budget at 4 cycles for polish work which tends to be broader in scope.
