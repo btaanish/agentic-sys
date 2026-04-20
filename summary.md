@@ -4,6 +4,7 @@ A Deep Research Agent System built with FastAPI, featuring multi-agent orchestra
 
 ## All Commits
 
+- **0b03f60** [Leo] Update summary.md with M9-M10 commits
 - **8a9371c** [Sam] Fix 2 frontend gaps: add exploration_angles + contradictions display (#63) (Athena, 2026-04-20 16:29:03 +0000)
 - **e469001** [Athena] Update roadmap: M9 near-complete, define M10 fix round for 2 remaining gaps (Athena, 2026-04-20 16:24:32 +0000)
 - **71fedd6** [Sam] Fix 3 frontend-backend contract bugs (#61) (Athena, 2026-04-20 16:19:26 +0000)
