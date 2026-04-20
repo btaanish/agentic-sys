@@ -44,3 +44,23 @@
 **Components added:**
 - `README.md` — Project overview, setup instructions, usage guide, test instructions, architecture overview
 - `progress.md` — Updated with M3 components
+
+## M4: Polish, Add-ons & Final Validation
+
+### PR #5 — SSE event field fix (leo/sse-fix)
+
+**Components fixed:**
+- `static/app.js` — Fixed SSE event field mismatch: changed `event.type` to `event.event` and `event.content` to `event.data` to match server-sent event format
+- `tests/test_sse_fields.py` — Regression tests for correct SSE field usage (10 tests)
+
+### PR #6 — Add-on features (maya/m4-addons)
+
+**Components added:**
+- `static/index.html` — Added query history section, clear history button, loading spinner element, result action buttons (copy/download)
+- `static/app.js` — Query history with localStorage (save, load, render, clear, max 10 entries), copy-to-clipboard and download-as-txt for results, loading spinner show/hide during research
+- `static/style.css` — Styles for query history items, secondary buttons, result actions, and animated loading spinner
+- `tests/test_addons.py` — Tests for add-on features: query history HTML/JS, export/copy buttons, loading spinner, localStorage usage (10 tests)
+
+### Test Summary
+
+45 tests passing across 10 test files covering project structure, health endpoint, agents, registry, gather/synthesize pipeline, orchestrator, SSE streaming, SSE field correctness, frontend structure, and add-on features.
