@@ -1,5 +1,11 @@
+from __future__ import annotations
+
 from dataclasses import dataclass, field
 from enum import Enum
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from src.core.source_metadata import SourceMetadata
 
 
 class SubQuestionStatus(str, Enum):
@@ -14,6 +20,7 @@ class Evidence:
     source: str  # which agent produced it
     confidence: float  # 0.0 to 1.0
     sub_question_index: int  # which sub-question this relates to
+    source_metadata: SourceMetadata | None = None
 
 
 @dataclass
@@ -41,6 +48,7 @@ class ResearchState:
         source: str,
         confidence: float,
         sub_question_index: int,
+        source_metadata: SourceMetadata | None = None,
     ) -> None:
         self.evidence.append(
             Evidence(
@@ -48,6 +56,7 @@ class ResearchState:
                 source=source,
                 confidence=confidence,
                 sub_question_index=sub_question_index,
+                source_metadata=source_metadata,
             )
         )
         # Update confidence score for this sub-question (average of all evidence)
@@ -77,6 +86,11 @@ class ResearchState:
                 for sq in self.sub_questions
             ],
             "evidence_count": len(self.evidence),
+            "weak_sources": sum(
+                1
+                for e in self.evidence
+                if e.source_metadata is not None and e.source_metadata.is_weak()
+            ),
             "confidence_scores": self.confidence_scores,
             "unresolved_issues": self.unresolved_issues,
             "dead_ends": self.dead_ends,
