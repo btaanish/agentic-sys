@@ -73,6 +73,12 @@ class ResearchState:
     def add_unresolved(self, issue: str) -> None:
         self.unresolved_issues.append(issue)
 
+    def avg_confidence(self) -> float:
+        """Return average confidence across all sub-questions, or 0.0 if none."""
+        if not self.confidence_scores:
+            return 0.0
+        return sum(self.confidence_scores.values()) / len(self.confidence_scores)
+
     def to_dict(self) -> dict:
         """Return a serializable dict for SSE events."""
         return {
