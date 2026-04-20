@@ -302,6 +302,8 @@ class ResearchOrchestrator:
                         "confidence_per_sub_question": state.confidence_scores,
                         "remaining_gaps": list(state.unresolved_issues),
                         "pending_actions": len(state.next_actions),
+                        "exploration_angles": state.exploration_angles,
+                        "contradictions": state.contradictions,
                     }),
                 })
 

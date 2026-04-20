@@ -250,6 +250,17 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     }
 
+    if (data && data.exploration_angles && data.exploration_angles.length > 0) {
+      anglesPanel.hidden = false;
+      anglesDisplay.innerHTML = "";
+      for (var ea = 0; ea < data.exploration_angles.length; ea++) {
+        var angleDiv = document.createElement("div");
+        angleDiv.className = "angle-item";
+        angleDiv.textContent = data.exploration_angles[ea];
+        anglesDisplay.appendChild(angleDiv);
+      }
+    }
+
     if (msg === "Iteration progress" && data) {
       confidencePanel.hidden = false;
       var pct = Math.round((data.avg_confidence || 0) * 100);
@@ -269,6 +280,26 @@ document.addEventListener("DOMContentLoaded", function () {
         html += '<div class="remaining-gaps"><strong>Remaining gaps:</strong> ' + escapeHtml(data.remaining_gaps.join(", ")) + '</div>';
       }
       confidenceDisplay.innerHTML = html;
+
+      if (data.exploration_angles && data.exploration_angles.length > 0) {
+        anglesPanel.hidden = false;
+        anglesDisplay.innerHTML = "";
+        for (var ea2 = 0; ea2 < data.exploration_angles.length; ea2++) {
+          var angleDiv2 = document.createElement("div");
+          angleDiv2.className = "angle-item";
+          angleDiv2.textContent = data.exploration_angles[ea2];
+          anglesDisplay.appendChild(angleDiv2);
+        }
+      }
+
+      if (data.contradictions && data.contradictions.length > 0) {
+        for (var ci = 0; ci < data.contradictions.length; ci++) {
+          var cItem = document.createElement("div");
+          cItem.className = "progress-item contradiction-item";
+          cItem.textContent = "Contradiction: " + data.contradictions[ci].description;
+          progressDiv.appendChild(cItem);
+        }
+      }
 
       // Mark completed sub-questions
       if (data.confidence_per_sub_question) {
