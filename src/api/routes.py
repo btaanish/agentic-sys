@@ -1,6 +1,12 @@
+import asyncio
+import json
+from collections.abc import AsyncGenerator
+
 from fastapi import APIRouter
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
+from src.agents.orchestrator import ResearchOrchestrator
 from src.core.llm_client import LLMClient
 
 router = APIRouter()
@@ -11,17 +17,37 @@ class ResearchRequest(BaseModel):
     api_token: str | None = None
 
 
-class ResearchResponse(BaseModel):
-    result: str
-
-
 @router.get("/health")
 async def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
-@router.post("/research", response_model=ResearchResponse)
-async def research(request: ResearchRequest) -> ResearchResponse:
-    client = LLMClient()
-    result = await client.generate(request.query, api_token=request.api_token)
-    return ResearchResponse(result=result)
+@router.post("/research")
+async def research(request: ResearchRequest) -> StreamingResponse:
+    event_queue: asyncio.Queue[dict[str, str] | None] = asyncio.Queue()
+
+    async def callback(event: dict[str, str]) -> None:
+        await event_queue.put(event)
+
+    async def run_pipeline() -> None:
+        orchestrator = ResearchOrchestrator(
+            llm_client=LLMClient(),
+            api_token=request.api_token,
+            callback=callback,
+        )
+        await orchestrator.run(request.query)
+        await event_queue.put(None)  # Signal end of stream
+
+    async def event_generator() -> AsyncGenerator[str, None]:
+        task = asyncio.create_task(run_pipeline())
+        try:
+            while True:
+                event = await event_queue.get()
+                if event is None:
+                    break
+                yield f"data: {json.dumps(event)}\n\n"
+        finally:
+            if not task.done():
+                task.cancel()
+
+    return StreamingResponse(event_generator(), media_type="text/event-stream")
