@@ -28,3 +28,19 @@
 - `tests/test_gather_synth.py` — Unit tests for GatherAgent and SynthesizerAgent with mocked LLM (4 tests)
 - `tests/test_orchestrator.py` — Unit tests for orchestrator pipeline, fallback, and error handling (5 tests)
 - `tests/test_sse.py` — Integration tests for SSE endpoint (2 tests)
+
+## M3: Frontend & Documentation
+
+### PR #3 — Frontend UI (leo/m3-frontend)
+
+**Components added:**
+- `src/main.py` — Added CORS middleware, static file serving (`/static`), root route serving `index.html`
+- `static/index.html` — Research form with query input, API token field, progress and result sections
+- `static/style.css` — Frontend styles
+- `static/app.js` — Vanilla JS client: form submission, SSE stream parsing, progress/result/error display
+
+### PR #4 — Documentation (noah/m3-docs)
+
+**Components added:**
+- `README.md` — Project overview, setup instructions, usage guide, test instructions, architecture overview
+- `progress.md` — Updated with M3 components
