@@ -38,7 +38,9 @@ Build a multi-agent deep research system that performs iterative information dis
 - Orchestrator uses credibility to rank evidence, suppress weak sources, request corroboration
 - Synthesis agent weighs evidence by credibility scores
 - Tests for source evaluation, scoring, and orchestrator integration
-- **Status: PENDING**
+- **Status: COMPLETE** (branch maya/source-credibility, 98 tests passing, 2 cycles used)
+- Verified: SourceMetadata model, SourceEvaluator agent, orchestrator integration, synthesis weighting all confirmed working
+- Minor gaps: SSE event after credibility eval missing, corroboration detection-only (not executed). Both deferred to M7.
 
 ### M7: Iterative Research Loop & Dynamic Decision-Making (Budget: 6 cycles)
 - Replace single-pass pipeline with iterative loop (configurable max iterations)
@@ -69,3 +71,5 @@ Build a multi-agent deep research system that performs iterative information dis
 - M5 verification caught that agents weren't truly state-aware (orchestrator proxied writes). Fix round required. Lesson: verify agent autonomy, not just orchestrator behavior.
 - Budget estimates increased for Phase 2 milestones — these involve more complex logic than scaffolding.
 - Human urgency on source credibility (Issue #5) — reprioritized M6 to address this before iterative loop.
+- M6 completed efficiently in 2 cycles. Verification found SSE gap and corroboration is detection-only — both acceptable scope boundaries, deferred to M7 where iterative loop enables re-research naturally.
+- Budget accuracy improving: M6 estimated 6 cycles, used 2. Can tighten Phase 2 estimates.
