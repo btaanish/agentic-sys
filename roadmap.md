@@ -23,34 +23,39 @@ Build a multi-agent deep research system that performs iterative information dis
 
 ## Phase 2 Milestones (Core Agentic Intelligence — IN PROGRESS)
 
-Phase 1 built a working prototype with UI, API, and a basic 3-stage pipeline. However, independent evaluation reveals the core "agentic" capabilities from the spec are missing. The current system runs a fixed linear pipeline (decompose → gather → synthesize) with no iteration, no parallel execution, no shared state, and no evidence reasoning.
-
 ### M5: Shared Research State & Parallel Agent Execution (Budget: 6 cycles)
-- Implement a `ResearchState` data structure: subquestions, evidence collected, confidence scores, unresolved issues, dead ends, next actions
-- Refactor orchestrator to use shared state instead of simple string aggregation
-- Add parallel agent execution (asyncio.gather for concurrent sub-question investigation)
-- Add specialized agent types: context agent, evidence agent, counterexample agent, gap-detection agent
-- Agents read from and write to shared state
-- Tests for state management and parallel execution
+- ResearchState data structure with subquestions, evidence, confidence scores, unresolved issues, dead ends, next actions
+- Orchestrator refactored to use shared state, parallel agent execution via asyncio.gather
+- 4 specialized agents (Context, Evidence, Counterexample, GapDetection) that read/write state directly
+- SSE events enriched with state data
+- **Status: COMPLETE** (branch leo/agents-state-aware verified by Apollo, 73 tests passing, 4 cycles used)
+
+### M6: Source Credibility & Trust Scoring Module (Budget: 6 cycles) — URGENT per human
+- **Reprioritized from M7 per human request (Issue #5)**
+- Source evaluation module: assess credibility, recency, consistency, bias, corroboration
+- SourceMetadata model with credibility_score, bias_score, recency_score, source_type, independently_verified
+- Integrate with ResearchState: Evidence objects enriched with source metadata
+- Orchestrator uses credibility to rank evidence, suppress weak sources, request corroboration
+- Synthesis agent weighs evidence by credibility scores
+- Tests for source evaluation, scoring, and orchestrator integration
 - **Status: PENDING**
 
-### M6: Iterative Research Loop & Dynamic Decision-Making (Budget: 6 cycles)
+### M7: Iterative Research Loop & Dynamic Decision-Making (Budget: 6 cycles)
 - Replace single-pass pipeline with iterative loop (configurable max iterations)
-- After each gather round, evaluate shared state to decide next steps: clarify terms, validate claims, expand partial answers, resolve conflicts, explore alternatives
-- Open-question tracking: maintain explicit list of unresolved questions with confidence levels
+- After each gather round, evaluate shared state to decide next steps
+- Open-question tracking with confidence levels
 - Follow-up query generation based on gaps found
 - Tests for iteration logic and decision-making
 - **Status: PENDING**
 
-### M7: Source Evaluation, Cross-Angle Exploration & Contradiction Handling (Budget: 6 cycles)
-- Source evaluation: assess credibility, recency, consistency, directness of evidence
-- Cross-angle exploration: technical, historical, empirical, comparative, skeptical, practical investigation frames
-- Contradiction detection: identify conflicting sources, analyze reasons, trigger targeted resolution
+### M8: Cross-Angle Exploration & Contradiction Handling (Budget: 6 cycles)
+- Cross-angle exploration: technical, historical, empirical, comparative, skeptical, practical frames
+- Contradiction detection: identify conflicting sources, analyze reasons, trigger resolution
 - Uncertainty tracking with confidence levels in final output
-- Tests for evaluation, contradiction detection, and multi-angle coverage
+- Tests for multi-angle coverage and contradiction detection
 - **Status: PENDING**
 
-### M8: Synthesis Enhancement, summary.md & Final Polish (Budget: 4 cycles)
+### M9: Synthesis Enhancement, summary.md & Final Polish (Budget: 4 cycles)
 - Enhanced synthesis: coherent answer + supporting evidence + remaining uncertainty + confidence assessment
 - Create summary.md tracking each commit and new file (per spec requirement)
 - UI updates to display research state, confidence levels, and evidence quality
@@ -61,4 +66,6 @@ Phase 1 built a working prototype with UI, API, and a basic 3-stage pipeline. Ho
 - Phase 1 (M1-M4) built solid scaffolding efficiently. Code is modular and well-tested.
 - M3 had an SSE field mismatch bug caught by verification. Lesson: always regression-test frontend-backend contracts.
 - Independent evaluation revealed the previous roadmap prematurely declared completion. The prototype works but lacks the core iterative, multi-agent intelligence described in the spec. Phase 2 addresses this gap.
+- M5 verification caught that agents weren't truly state-aware (orchestrator proxied writes). Fix round required. Lesson: verify agent autonomy, not just orchestrator behavior.
 - Budget estimates increased for Phase 2 milestones — these involve more complex logic than scaffolding.
+- Human urgency on source credibility (Issue #5) — reprioritized M6 to address this before iterative loop.

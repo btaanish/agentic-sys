@@ -80,6 +80,32 @@ remaining uncertainty
 
 ## How do you consider the project is success?
 
-The system should have an interactive UI where the research question can actually be input folowed by a space where claude API key or Claude OAuth key can be input. 
+The system should have an interactive UI where the research question can actually be input folowed by a space where claude API key or Claude OAuth key can be input.
 
 Also create a summary.md where each commit, new file created in every step is reciorded serial wise
+
+## Constraints
+
+### URGENT: Source Credibility and Trust Scoring (from human, Issue #5)
+Every retrieved source must be evaluated for reliability. The system must assign quality metrics including:
+- Domain authority, source type, author expertise
+- Publication recency, internal consistency
+- Citation density, corroboration by independent sources
+- Likelihood of bias or promotional framing
+
+Source object enrichment format:
+```json
+{
+  "source_id": "src_184",
+  "url": "...",
+  "domain": "example.org",
+  "source_type": "academic_paper",
+  "published_at": "2025-11-04",
+  "credibility_score": 0.91,
+  "bias_score": 0.18,
+  "recency_score": 0.86,
+  "independently_verified": true
+}
+```
+
+The orchestrator must use this to: rank evidence, suppress weak sources, request stronger corroboration when weak evidence dominates, and expose confidence to downstream synthesis agents.
