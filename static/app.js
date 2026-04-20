@@ -75,16 +75,16 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   function handleEvent(event) {
-    if (event.type === "status") {
+    if (event.event === "status") {
       var item = document.createElement("div");
       item.className = "progress-item";
       item.textContent = event.message || JSON.stringify(event);
       progressDiv.appendChild(item);
       progressDiv.scrollTop = progressDiv.scrollHeight;
-    } else if (event.type === "result") {
+    } else if (event.event === "result") {
       resultSection.hidden = false;
-      resultDiv.textContent = event.content || JSON.stringify(event);
-    } else if (event.type === "error") {
+      resultDiv.textContent = event.data || JSON.stringify(event);
+    } else if (event.event === "error") {
       errorDiv.textContent = event.message || "Research failed";
       errorDiv.hidden = false;
     }
