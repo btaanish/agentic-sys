@@ -41,6 +41,8 @@ class ResearchState:
     unresolved_issues: list[str] = field(default_factory=list)
     dead_ends: list[str] = field(default_factory=list)
     next_actions: list[str] = field(default_factory=list)
+    contradictions: list[dict] = field(default_factory=list)
+    exploration_angles: list[str] = field(default_factory=list)
 
     def add_evidence(
         self,
@@ -73,6 +75,20 @@ class ResearchState:
     def add_unresolved(self, issue: str) -> None:
         self.unresolved_issues.append(issue)
 
+    def add_contradiction(
+        self,
+        evidence_ids: list[int],
+        description: str,
+        resolution: str | None = None,
+        confidence_impact: float = 0.0,
+    ) -> None:
+        self.contradictions.append({
+            "evidence_ids": evidence_ids,
+            "description": description,
+            "resolution": resolution,
+            "confidence_impact": confidence_impact,
+        })
+
     def avg_confidence(self) -> float:
         """Return average confidence across all sub-questions, or 0.0 if none."""
         if not self.confidence_scores:
@@ -101,4 +117,6 @@ class ResearchState:
             "unresolved_issues": self.unresolved_issues,
             "dead_ends": self.dead_ends,
             "next_actions": self.next_actions,
+            "contradictions": self.contradictions,
+            "exploration_angles": self.exploration_angles,
         }
