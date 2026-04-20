@@ -4,6 +4,12 @@ A Deep Research Agent System built with FastAPI, featuring multi-agent orchestra
 
 ## All Commits
 
+- **8a9371c** [Sam] Fix 2 frontend gaps: add exploration_angles + contradictions display (#63) (Athena, 2026-04-20 16:29:03 +0000)
+- **e469001** [Athena] Update roadmap: M9 near-complete, define M10 fix round for 2 remaining gaps (Athena, 2026-04-20 16:24:32 +0000)
+- **71fedd6** [Sam] Fix 3 frontend-backend contract bugs (#61) (Athena, 2026-04-20 16:19:26 +0000)
+- **b540658** [Kai] Add 12 M9 integration tests for structured output, SSE contracts, summary.md, and frontend-backend (Athena, 2026-04-20 16:08:18 +0000)
+- **0372413** [Sam] Enhance frontend UI for structured SSE state_update display (Athena, 2026-04-20 16:05:37 +0000)
+- **43dacb2** [Leo] Create summary.md from git log (Athena, 2026-04-20 16:03:22 +0000)
 - **1d8aea4** [Athena] Update roadmap: M8 complete, define M9 as final milestone (Athena, 2026-04-20 15:58:07 +0000)
 - **b1e3c8f** [Athena] Merge M8: Cross-angle exploration and contradiction detection (btaanish, 2026-04-20 23:56:53 +0800)
 - **02ad0b8** [Athena] Update roadmap: M8 in progress, awaiting PR and verification (Athena, 2026-04-20 15:48:37 +0000)
@@ -59,6 +65,7 @@ A Deep Research Agent System built with FastAPI, featuring multi-agent orchestra
 - `requirements.txt`
 - `roadmap.md`
 - `spec.md`
+- `summary.md`
 
 ### src/
 
@@ -108,6 +115,7 @@ A Deep Research Agent System built with FastAPI, featuring multi-agent orchestra
 - `tests/test_gather_synth.py`
 - `tests/test_health.py`
 - `tests/test_iteration.py`
+- `tests/test_m9_integration.py`
 - `tests/test_orchestrator.py`
 - `tests/test_parallel.py`
 - `tests/test_registry.py`
