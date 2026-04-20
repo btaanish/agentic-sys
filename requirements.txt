@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+anthropic
+pytest
+httpx
+anyio
+pytest-anyio
