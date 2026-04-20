@@ -30,6 +30,13 @@ class SynthesizerAgent(BaseAgent):
             f"produce a clear, well-organized, and coherent summary that answers the "
             f"original question. Evidence is ordered by credibility score. Prioritize "
             f"higher-credibility sources. Note any claims that rely solely on "
-            f"low-credibility sources.\n\n{query}"
+            f"low-credibility sources.\n\n"
+            f"Structure your response with these sections:\n"
+            f"1. Main Findings\n"
+            f"2. Supporting Evidence\n"
+            f"3. Contradictions Found (if any contradictions are listed in the input)\n"
+            f"4. Remaining Uncertainty\n"
+            f"5. Overall Confidence\n\n"
+            f"{query}"
         )
         return await self.llm_client.generate(prompt, api_token=self.api_token)
