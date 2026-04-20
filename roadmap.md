@@ -53,12 +53,12 @@ Build a multi-agent deep research system that performs iterative information dis
 - **Status: COMPLETE** (PR #8 merged, 113 tests passing, 2 cycles used)
 - Verified: All 3 Apollo verifiers PASSED (structural, logic, tests)
 
-### M8: Cross-Angle Exploration & Contradiction Handling (Budget: 6 cycles)
+### M8: Cross-Angle Exploration & Contradiction Handling (Budget: 4 cycles)
 - Cross-angle exploration: technical, historical, empirical, comparative, skeptical, practical frames
 - Contradiction detection: identify conflicting sources, analyze reasons, trigger resolution
 - Uncertainty tracking with confidence levels in final output
 - Tests for multi-angle coverage and contradiction detection
-- **Status: PENDING**
+- **Status: IN PROGRESS** (branch ares/cross-angle, 128 tests passing, implementation complete, awaiting PR + verification)
 
 ### M9: Synthesis Enhancement, summary.md & Final Polish (Budget: 4 cycles)
 - Enhanced synthesis: coherent answer + supporting evidence + remaining uncertainty + confidence assessment
