@@ -1,6 +1,7 @@
 import asyncio
 import json
 from collections.abc import AsyncGenerator
+from typing import Any
 
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
@@ -24,9 +25,9 @@ async def health() -> dict[str, str]:
 
 @router.post("/research")
 async def research(request: ResearchRequest) -> StreamingResponse:
-    event_queue: asyncio.Queue[dict[str, str] | None] = asyncio.Queue()
+    event_queue: asyncio.Queue[dict[str, Any] | None] = asyncio.Queue()
 
-    async def callback(event: dict[str, str]) -> None:
+    async def callback(event: dict[str, Any]) -> None:
         await event_queue.put(event)
 
     async def run_pipeline() -> None:

@@ -17,7 +17,8 @@ async def test_sse_endpoint_streams_events():
         call_count += 1
         if call_count == 1:
             return '["sub-question-1"]'
-        elif call_count == 2:
+        elif call_count <= 5:
+            # 4 agents x 1 sub-question = 4 gather calls
             return "research findings"
         else:
             return "final answer"
