@@ -1,5 +1,12 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from src.agents.base import BaseAgent
 from src.core.llm_client import LLMClient
+
+if TYPE_CHECKING:
+    from src.core.research_state import ResearchState
 
 
 class CounterexampleAgent(BaseAgent):
@@ -13,13 +20,23 @@ class CounterexampleAgent(BaseAgent):
         self.llm_client = llm_client
         self.api_token = api_token
 
-    async def execute(self, query: str) -> str:
+    async def execute(self, query: str, state: ResearchState | None = None, sub_question_index: int = 0) -> str:
         """Find counterexamples and opposing viewpoints for the query."""
+        existing_claims = ""
+        if state is not None and state.evidence:
+            existing_claims = "\n\nExisting claims to challenge:\n"
+            for e in state.evidence:
+                existing_claims += f"- [{e.source}] {e.content}\n"
+
         prompt = (
             "You are a research assistant specializing in critical analysis. "
             "For the following query, find counterexamples, opposing viewpoints, "
             "and weaknesses in the argument. Challenge assumptions and identify "
             "potential flaws:\n\n"
-            f"{query}"
+            f"{query}{existing_claims}"
         )
-        return await self.llm_client.generate(prompt, api_token=self.api_token)
+        result = await self.llm_client.generate(prompt, api_token=self.api_token)
+        if state is not None:
+            state.add_evidence(result, source=self.name, confidence=0.6, sub_question_index=sub_question_index)
+            state.add_unresolved(f"Counterexamples found for sub-question {sub_question_index}: {result[:100]}")
+        return result

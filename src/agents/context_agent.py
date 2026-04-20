@@ -1,5 +1,12 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from src.agents.base import BaseAgent
 from src.core.llm_client import LLMClient
+
+if TYPE_CHECKING:
+    from src.core.research_state import ResearchState
 
 
 class ContextAgent(BaseAgent):
@@ -13,7 +20,7 @@ class ContextAgent(BaseAgent):
         self.llm_client = llm_client
         self.api_token = api_token
 
-    async def execute(self, query: str) -> str:
+    async def execute(self, query: str, state: ResearchState | None = None, sub_question_index: int = 0) -> str:
         """Provide background context for the given query."""
         prompt = (
             "You are a research assistant specializing in providing background context. "
@@ -21,4 +28,7 @@ class ContextAgent(BaseAgent):
             "and any applicable frameworks or theories that help understand the topic:\n\n"
             f"{query}"
         )
-        return await self.llm_client.generate(prompt, api_token=self.api_token)
+        result = await self.llm_client.generate(prompt, api_token=self.api_token)
+        if state is not None:
+            state.add_evidence(result, source=self.name, confidence=0.7, sub_question_index=sub_question_index)
+        return result

@@ -1,5 +1,12 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from src.agents.base import BaseAgent
 from src.core.llm_client import LLMClient
+
+if TYPE_CHECKING:
+    from src.core.research_state import ResearchState
 
 
 class SynthesizerAgent(BaseAgent):
@@ -10,11 +17,13 @@ class SynthesizerAgent(BaseAgent):
         self.llm_client = llm_client
         self.api_token = api_token
 
-    async def execute(self, query: str) -> str:
+    async def execute(self, query: str, state: ResearchState | None = None, sub_question_index: int = 0) -> str:
         """Synthesize findings into a coherent answer.
 
         Args:
             query: A string containing the original query and all gathered findings.
+            state: Optional ResearchState (not used by synthesizer but accepted for interface consistency).
+            sub_question_index: Optional sub-question index (not used by synthesizer).
         """
         prompt = (
             f"You are a research synthesizer. Given the following research findings, "

@@ -77,15 +77,6 @@ class ResearchOrchestrator:
             ]
             agent_names = [a.name for a in agents]
 
-            async def run_agent(
-                agent: ContextAgent | EvidenceAgent | CounterexampleAgent | GapDetectionAgent,
-                sq_text: str,
-                sq_index: int,
-            ) -> str:
-                result = await agent.execute(sq_text)
-                state.add_evidence(result, source=agent.name, confidence=0.7, sub_question_index=sq_index)
-                return result
-
             tasks = []
             for i, sq in enumerate(state.sub_questions):
                 sq.status = SubQuestionStatus.IN_PROGRESS
@@ -95,7 +86,7 @@ class ResearchOrchestrator:
                     "message": f"Researching sub-topic: {sq.text}",
                 })
                 for agent in agents:
-                    tasks.append(run_agent(agent, sq.text, i))
+                    tasks.append(agent.execute(sq.text, state, i))
 
             dispatch_data = json.dumps(
                 {"agents": agent_names, "sub_question_count": len(state.sub_questions)}

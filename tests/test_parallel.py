@@ -97,8 +97,8 @@ async def test_orchestrator_state_has_confidence_scores():
     assert len(research_complete) == 1
     data = json.loads(research_complete[0]["data"])
     assert "confidence_scores" in data
-    # All 4 agents add evidence with confidence=0.7 for sub-question 0
-    assert data["confidence_scores"]["0"] == pytest.approx(0.7)
+    # 4 agents add evidence with confidence 0.7, 0.8, 0.6, 0.5 → avg 0.65
+    assert data["confidence_scores"]["0"] == pytest.approx(0.65)
 
 
 @pytest.mark.anyio
