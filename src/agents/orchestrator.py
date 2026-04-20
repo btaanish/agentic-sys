@@ -9,6 +9,7 @@ from src.agents.context_agent import ContextAgent
 from src.agents.counterexample_agent import CounterexampleAgent
 from src.agents.evidence_agent import EvidenceAgent
 from src.agents.gap_detection_agent import GapDetectionAgent
+from src.agents.source_evaluator import SourceEvaluator
 from src.agents.synthesizer import SynthesizerAgent
 from src.core.llm_client import LLMClient
 from src.core.research_state import ResearchState, SubQuestion, SubQuestionStatus
@@ -111,6 +112,37 @@ class ResearchOrchestrator:
                 "data": confidence_data,
             })
 
+            # Step 2b: Evaluate source credibility
+            source_evaluator = SourceEvaluator(self.llm_client, api_token=self.api_token)
+            await self._emit({"event": "status", "message": "Evaluating source credibility"})
+
+            for evidence in state.evidence:
+                if evidence.source_metadata is None:
+                    metadata = await source_evaluator.evaluate(evidence.content, evidence.source)
+                    evidence.source_metadata = metadata
+
+            # Flag weak sources
+            weak_sources = [e for e in state.evidence if e.source_metadata and e.source_metadata.is_weak()]
+            if weak_sources:
+                await self._emit({
+                    "event": "state_update",
+                    "message": f"Warning: {len(weak_sources)} weak source(s) detected (credibility < 0.3)",
+                    "data": json.dumps({"weak_source_count": len(weak_sources)}),
+                })
+
+            # Step 2c: Corroboration requests for low-credibility sub-questions
+            for i, sq in enumerate(state.sub_questions):
+                relevant_evidence = [
+                    e for e in state.evidence if e.sub_question_index == i
+                ]
+                if relevant_evidence:
+                    avg_credibility = sum(
+                        e.source_metadata.credibility_score if e.source_metadata else 0.5
+                        for e in relevant_evidence
+                    ) / len(relevant_evidence)
+                    if avg_credibility < 0.4:
+                        state.next_actions.append(f"Corroboration needed for: {sq.text}")
+
             # Step 3: Synthesize
             await self._emit({"event": "status", "message": "Synthesizing results"})
             synthesizer = SynthesizerAgent(self.llm_client, api_token=self.api_token)
@@ -120,9 +152,15 @@ class ResearchOrchestrator:
                 relevant_evidence = [
                     e for e in state.evidence if e.sub_question_index == i
                 ]
+                # Rank by credibility (highest first)
+                relevant_evidence.sort(
+                    key=lambda e: e.source_metadata.credibility_score if e.source_metadata else 0.5,
+                    reverse=True,
+                )
                 synthesis_input += f"Sub-question {i + 1}: {sq.text}\n"
                 for e in relevant_evidence:
-                    synthesis_input += f"  [{e.source}] {e.content}\n"
+                    cred = e.source_metadata.credibility_score if e.source_metadata else 0.5
+                    synthesis_input += f"  [{e.source}] (credibility: {cred:.1f}) {e.content}\n"
                 synthesis_input += "\n"
 
             final_answer = await synthesizer.execute(synthesis_input)

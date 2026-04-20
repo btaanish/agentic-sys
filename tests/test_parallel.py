@@ -20,6 +20,9 @@ async def test_orchestrator_runs_agents_in_parallel():
             return '["sq1", "sq2"]'
         elif call_count <= 9:
             return f"agent result {call_count}"
+        elif call_count <= 17:
+            # Source evaluator calls: 8 evidence pieces
+            return '{"source_type": "unknown", "credibility_score": 0.7, "bias_score": 0.3, "recency_score": 0.5, "domain": "test"}'
         else:
             return "final answer"
 
@@ -29,8 +32,8 @@ async def test_orchestrator_runs_agents_in_parallel():
         result = await orchestrator.run("test query")
 
     assert result == "final answer"
-    # 1 decompose + 4 agents * 2 sub-questions + 1 synthesize = 10
-    assert call_count == 10
+    # 1 decompose + 4 agents * 2 sub-questions + 8 evaluate + 1 synthesize = 18
+    assert call_count == 18
 
 
 @pytest.mark.anyio

@@ -28,6 +28,9 @@ async def test_orchestrator_full_flow():
         elif call_count <= 9:
             # Gather calls: 4 agents x 2 sub-questions = 8 calls
             return f"findings for call {call_count}"
+        elif call_count <= 17:
+            # Source evaluator calls: 8 evidence pieces
+            return '{"source_type": "unknown", "credibility_score": 0.7, "bias_score": 0.3, "recency_score": 0.5, "domain": "test"}'
         else:
             # Synthesize call
             return "final synthesized answer"
@@ -36,7 +39,8 @@ async def test_orchestrator_full_flow():
         result = await orchestrator.run("test query")
 
     assert result == "final synthesized answer"
-    assert call_count == 10  # 1 decompose + 8 gather (4 agents x 2 sub-q) + 1 synthesize
+    # 1 decompose + 8 gather (4 agents x 2 sub-q) + 8 evaluate + 1 synthesize
+    assert call_count == 18
 
     # Check events emitted
     event_types = [e["event"] for e in events]
@@ -66,7 +70,11 @@ async def test_orchestrator_no_callback():
         if call_count == 1:
             return '["q1"]'
         elif call_count <= 5:
+            # Gather calls: 4 agents x 1 sub-question
             return "gathered"
+        elif call_count <= 9:
+            # Source evaluator calls: 4 evidence pieces
+            return '{"source_type": "unknown", "credibility_score": 0.7, "bias_score": 0.3, "recency_score": 0.5, "domain": "test"}'
         else:
             return "synthesized"
 
@@ -90,7 +98,11 @@ async def test_orchestrator_decompose_fallback():
         if call_count == 1:
             return "not valid json"
         elif call_count <= 5:
+            # Gather calls: 4 agents x 1 fallback sub-question
             return "gathered"
+        elif call_count <= 9:
+            # Source evaluator calls: 4 evidence pieces
+            return '{"source_type": "unknown", "credibility_score": 0.7, "bias_score": 0.3, "recency_score": 0.5, "domain": "test"}'
         else:
             return "synthesized"
 
@@ -98,7 +110,8 @@ async def test_orchestrator_decompose_fallback():
         result = await orchestrator.run("original query")
 
     assert result == "synthesized"
-    assert call_count == 6  # 1 decompose + 4 gather (4 agents x 1 fallback sub-q) + 1 synthesize
+    # 1 decompose + 4 gather (4 agents x 1 fallback sub-q) + 4 evaluate + 1 synthesize
+    assert call_count == 10
 
 
 @pytest.mark.anyio

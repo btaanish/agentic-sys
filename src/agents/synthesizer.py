@@ -28,6 +28,8 @@ class SynthesizerAgent(BaseAgent):
         prompt = (
             f"You are a research synthesizer. Given the following research findings, "
             f"produce a clear, well-organized, and coherent summary that answers the "
-            f"original question:\n\n{query}"
+            f"original question. Evidence is ordered by credibility score. Prioritize "
+            f"higher-credibility sources. Note any claims that rely solely on "
+            f"low-credibility sources.\n\n{query}"
         )
         return await self.llm_client.generate(prompt, api_token=self.api_token)
