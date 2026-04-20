@@ -21,15 +21,28 @@
             <button type="submit" id="submit-btn">Research</button>
         </form>
 
+        <div id="query-history-section">
+            <h2>Query History</h2>
+            <div id="query-history"></div>
+            <button type="button" id="clear-history-btn" class="btn-secondary">Clear History</button>
+        </div>
+
         <div id="error" class="error" hidden></div>
 
         <div id="progress-section" hidden>
             <h2>Progress</h2>
+            <div id="loading-spinner" class="spinner" hidden>
+                <div class="spinner-circle"></div>
+            </div>
             <div id="progress"></div>
         </div>
 
         <div id="result-section" hidden>
             <h2>Result</h2>
+            <div class="result-actions" id="result-actions" hidden>
+                <button type="button" id="copy-result-btn" class="btn-secondary">Copy to Clipboard</button>
+                <button type="button" id="download-result-btn" class="btn-secondary">Download as .txt</button>
+            </div>
             <div id="result"></div>
         </div>
     </div>
