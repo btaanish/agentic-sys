@@ -42,13 +42,16 @@ Build a multi-agent deep research system that performs iterative information dis
 - Verified: SourceMetadata model, SourceEvaluator agent, orchestrator integration, synthesis weighting all confirmed working
 - Minor gaps: SSE event after credibility eval missing, corroboration detection-only (not executed). Both deferred to M7.
 
-### M7: Iterative Research Loop & Dynamic Decision-Making (Budget: 6 cycles)
+### M7: Iterative Research Loop & Dynamic Decision-Making (Budget: 5 cycles)
 - Replace single-pass pipeline with iterative loop (configurable max iterations)
 - After each gather round, evaluate shared state to decide next steps
 - Open-question tracking with confidence levels
 - Follow-up query generation based on gaps found
+- Corroboration execution (M6 gap fixed)
+- SSE iteration progress events (M6 gap fixed)
 - Tests for iteration logic and decision-making
-- **Status: PENDING**
+- **Status: COMPLETE** (PR #8 merged, 113 tests passing, 2 cycles used)
+- Verified: All 3 Apollo verifiers PASSED (structural, logic, tests)
 
 ### M8: Cross-Angle Exploration & Contradiction Handling (Budget: 6 cycles)
 - Cross-angle exploration: technical, historical, empirical, comparative, skeptical, practical frames
@@ -73,3 +76,5 @@ Build a multi-agent deep research system that performs iterative information dis
 - Human urgency on source credibility (Issue #5) — reprioritized M6 to address this before iterative loop.
 - M6 completed efficiently in 2 cycles. Verification found SSE gap and corroboration is detection-only — both acceptable scope boundaries, deferred to M7 where iterative loop enables re-research naturally.
 - Budget accuracy improving: M6 estimated 6 cycles, used 2. Can tighten Phase 2 estimates.
+- M7 also completed in 2 cycles (budgeted 5). Verification clean — all 3 verifiers PASS on first attempt. Team is executing efficiently.
+- Reducing M8 budget to 4 cycles (from 6) based on consistent over-budgeting pattern.
