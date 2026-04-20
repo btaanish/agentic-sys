@@ -16,6 +16,15 @@ from src.core.research_state import ResearchState, SubQuestion, SubQuestionStatu
 
 EventCallback = Callable[[dict[str, Any]], Coroutine[Any, Any, None]]
 
+EXPLORATION_ANGLES = [
+    "technical",
+    "historical",
+    "empirical",
+    "comparative",
+    "skeptical",
+    "practical",
+]
+
 
 class ResearchOrchestrator:
     """Orchestrates the research pipeline: decompose, gather, synthesize."""
@@ -36,10 +45,17 @@ class ResearchOrchestrator:
         if self.callback:
             await self.callback(event)
 
-    async def _decompose(self, query: str) -> list[str]:
+    async def _decompose(self, query: str, angles: list[str] | None = None) -> list[str]:
         """Decompose a query into 2-4 sub-questions using the LLM."""
+        angle_instruction = ""
+        if angles:
+            angle_list = ", ".join(angles)
+            angle_instruction = (
+                f" Generate sub-questions that explore these investigative angles: {angle_list}."
+                f" Prefix each sub-question with its angle in brackets, e.g. [technical] ..."
+            )
         prompt = (
-            f"Break down the following research query into 2-4 specific sub-questions. "
+            f"Break down the following research query into 2-4 specific sub-questions.{angle_instruction} "
             f"Return ONLY a JSON array of strings, no other text:\n\n{query}"
         )
         try:
@@ -149,14 +165,65 @@ class ResearchOrchestrator:
                     needs_corroboration.append(i)
         return needs_corroboration
 
+    async def _detect_contradictions(self, state: ResearchState) -> None:
+        """Detect contradictions between evidence items using LLM analysis.
+
+        Only invokes LLM when evidence within a sub-question group shows
+        meaningful credibility divergence (spread > 0.2), which signals
+        potential conflicting information worth analyzing.
+        """
+        # Group evidence by sub_question_index
+        groups: dict[int, list[tuple[int, Any]]] = {}
+        for idx, evidence in enumerate(state.evidence):
+            groups.setdefault(evidence.sub_question_index, []).append((idx, evidence))
+
+        for sq_idx, items in groups.items():
+            if len(items) < 2:
+                continue
+
+            # Only analyze groups with meaningful credibility divergence
+            credibilities = [
+                e.source_metadata.credibility_score if e.source_metadata else 0.5
+                for _, e in items
+            ]
+            if max(credibilities) - min(credibilities) <= 0.2:
+                continue
+
+            evidence_text = "\n".join(
+                f"Evidence {i}: [{e.source}] {e.content}" for i, e in items
+            )
+            prompt = (
+                f"Given these evidence items for a research sub-question, identify any contradictions "
+                f"between them. Return ONLY a JSON array of objects with keys 'evidence_indices' "
+                f"(list of integer indices) and 'description' (string). If no contradictions, "
+                f"return an empty array [].\n\n{evidence_text}"
+            )
+            try:
+                raw = await self.llm_client.generate(prompt, api_token=self.api_token)
+                start = raw.index("[")
+                end = raw.rindex("]") + 1
+                detected: list[dict] = json.loads(raw[start:end])
+                for c in detected:
+                    evidence_ids = [items[i][0] for i in c.get("evidence_indices", []) if i < len(items)]
+                    description = c.get("description", "")
+                    if evidence_ids and description:
+                        state.add_contradiction(evidence_ids=evidence_ids, description=description)
+                        action = f"Resolve contradiction: {description}"
+                        if action not in state.next_actions:
+                            state.next_actions.append(action)
+            except (json.JSONDecodeError, ValueError):
+                continue
+
     async def run(self, query: str) -> str:
         """Run the full research pipeline with iterative refinement."""
         try:
             state = ResearchState(query=query)
 
-            # Step 1: Decompose
+            # Step 1: Decompose with exploration angles
             await self._emit({"event": "status", "message": "Decomposing query into sub-questions"})
-            sub_question_texts = await self._decompose(query)
+            initial_angles = EXPLORATION_ANGLES[:3]
+            sub_question_texts = await self._decompose(query, angles=initial_angles)
+            state.exploration_angles.extend(initial_angles)
 
             state.sub_questions = [
                 SubQuestion(text=sq) for sq in sub_question_texts
@@ -187,6 +254,17 @@ class ResearchOrchestrator:
                     ]
 
                 await self._gather_and_evaluate(state, target_questions)
+
+                # Detect contradictions
+                await self._detect_contradictions(state)
+
+                # Track new angles for subsequent iterations
+                if iteration > 0:
+                    angle_start = ((iteration % ((len(EXPLORATION_ANGLES) + 2) // 3)) * 3)
+                    new_angles = EXPLORATION_ANGLES[angle_start:angle_start + 3]
+                    for angle in new_angles:
+                        if angle not in state.exploration_angles:
+                            state.exploration_angles.append(angle)
 
                 # Check corroboration needs and populate next_actions
                 corroboration_indices = self._check_corroboration(state)
@@ -254,6 +332,15 @@ class ResearchOrchestrator:
                     cred = e.source_metadata.credibility_score if e.source_metadata else 0.5
                     synthesis_input += f"  [{e.source}] (credibility: {cred:.1f}) {e.content}\n"
                 synthesis_input += "\n"
+
+            if state.contradictions:
+                synthesis_input += "Contradictions found:\n"
+                for c in state.contradictions:
+                    synthesis_input += f"  - {c['description']} (evidence IDs: {c['evidence_ids']})\n"
+                synthesis_input += "\n"
+
+            if state.exploration_angles:
+                synthesis_input += f"Exploration angles covered: {', '.join(state.exploration_angles)}\n\n"
 
             final_answer = await synthesizer.execute(synthesis_input)
 
