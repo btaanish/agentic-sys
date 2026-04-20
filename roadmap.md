@@ -30,16 +30,20 @@ Build a multi-agent deep research system with FastAPI backend, SSE streaming, an
 - End-to-end validation with test API token
 - README with setup/run instructions
 - progress.md updated
-- **Status: IN PROGRESS**
+- **Status: COMPLETE** (PRs #3, #4 merged; SSE field mismatch found by Vera, fixed by Leo in PR #5 with regression tests; 33 tests passing. PR #5 still open — must be merged.)
 
-### M4: Polish, Add-ons & Final Validation (Budget: 3 cycles)
-- Comprehensive test coverage
-- Interesting add-ons (query history, export results, etc.)
-- Final validation with provided API token
-- progress.md fully updated
+### M4: Polish, Add-ons & Final Validation (Budget: 4 cycles)
+- Merge PR #5 (SSE fix) to main
+- Interesting add-ons per spec: query history, export/copy results, loading animations
+- End-to-end validation with provided API token (sk-ant-oat01-...)
+- Comprehensive test coverage for add-on features
+- progress.md fully updated with M4 components
+- Final code cleanup and quality pass
 - **Status: NOT STARTED**
 
 ## Lessons Learned
 - M1 completed efficiently in first cycle. Scaffolding is solid and clean.
 - M2 completed in ~2 cycles. Code is modular with good test coverage.
 - Combined README into M3 to avoid M4 becoming too thin. M4 now focuses on polish and add-ons per spec requirements.
+- M3 had a high-severity SSE field mismatch bug (frontend used `event.type`/`event.content` but backend emits `event.event`/`event.data`). Caught by Vera during verification, fixed by Leo. Lesson: always add regression tests for frontend-backend contract mismatches.
+- Quinn's blind audit confirmed all M3 acceptance criteria met. Independent verification is valuable.
