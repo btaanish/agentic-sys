@@ -80,7 +80,7 @@ Build a multi-agent deep research system that performs iterative information dis
 - Merge ares/m9-final to main via PR
 - Verify all 140+ tests still pass after fixes
 - Update summary.md with final commits
-- **Status: PENDING**
+- **Status: COMPLETE** (both gaps fixed by Sam, 140 tests passing, Apollo verified PASS)
 
 ## Lessons Learned
 - Phase 1 (M1-M4) built solid scaffolding efficiently. Code is modular and well-tested.
