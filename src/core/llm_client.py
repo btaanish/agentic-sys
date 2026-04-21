@@ -1,31 +1,36 @@
+# src/core/llm_client.py
+import asyncio
 import os
-
 import anthropic
 
 
 class LLMClient:
-    """Wrapper around the Anthropic SDK for LLM calls."""
-
     DEFAULT_MODEL = "claude-sonnet-4-6"
+    DEFAULT_CONCURRENCY = 4
 
-    def __init__(self, model: str | None = None) -> None:
+    def __init__(
+        self,
+        model: str | None = None,
+        api_token: str | None = None,
+        max_concurrency: int = DEFAULT_CONCURRENCY,
+    ) -> None:
         self.model = model or self.DEFAULT_MODEL
+        token = api_token or os.environ.get("ANTHROPIC_API_KEY", "")
+        self._client = anthropic.AsyncAnthropic(
+            api_key=token,
+            max_retries=5,
+            timeout=120.0,
+        )
+        self._sem = asyncio.Semaphore(max_concurrency)
 
     async def generate(self, prompt: str, api_token: str | None = None) -> str:
-        """Generate a response from the LLM.
-
-        Args:
-            prompt: The user prompt to send.
-            api_token: Optional API token. Falls back to ANTHROPIC_API_KEY env var.
-
-        Returns:
-            The text content of the LLM response.
-        """
-        token = api_token or os.environ.get("ANTHROPIC_API_KEY", "")
-        client = anthropic.AsyncAnthropic(api_key=token)
-        message = await client.messages.create(
-            model=self.model,
-            max_tokens=1024,
-            messages=[{"role": "user", "content": prompt}],
-        )
+        async with self._sem:
+            message = await self._client.messages.create(
+                model=self.model,
+                max_tokens=1024,
+                messages=[{"role": "user", "content": prompt}],
+            )
         return message.content[0].text
+
+    async def aclose(self) -> None:
+        await self._client.close()

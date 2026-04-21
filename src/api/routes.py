@@ -32,12 +32,17 @@ async def research(request: ResearchRequest) -> StreamingResponse:
 
     async def run_pipeline() -> None:
         orchestrator = ResearchOrchestrator(
-            llm_client=LLMClient(),
+            llm_client=LLMClient(api_token=request.api_token),
             api_token=request.api_token,
             callback=callback,
         )
-        await orchestrator.run(request.query)
-        await event_queue.put(None)  # Signal end of stream
+
+        try:
+            await orchestrator.run(request.query)
+        except Exception as e:
+            await event_queue.put({"type": "error", "message": str(e)})
+        finally:
+            await event_queue.put(None)  # Signal end of stream
 
     async def event_generator() -> AsyncGenerator[str, None]:
         task = asyncio.create_task(run_pipeline())
