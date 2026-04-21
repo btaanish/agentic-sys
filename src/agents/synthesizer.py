@@ -29,4 +29,9 @@ class SynthesizerAgent(BaseAgent):
             state: Optional ResearchState (not used by synthesizer but accepted for interface consistency).
             sub_question_index: Optional sub-question index (not used by synthesizer).
         """
-        return await self.llm_client.generate(query, api_token=self.api_token, system=_SYSTEM_PROMPT)
+        return await self.llm_client.generate(
+            query,
+            api_token=self.api_token,
+            system=_SYSTEM_PROMPT,
+            max_tokens=4096,
+        )

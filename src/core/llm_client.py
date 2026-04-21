@@ -7,6 +7,7 @@ import anthropic
 class LLMClient:
     DEFAULT_MODEL = "claude-sonnet-4-6"
     DEFAULT_CONCURRENCY = 4
+    DEFAULT_MAX_TOKENS = 1024
 
     def __init__(
         self,
@@ -28,11 +29,12 @@ class LLMClient:
         prompt: str,
         api_token: str | None = None,
         system: str | None = None,
+        max_tokens: int | None = None,
     ) -> str:
         async with self._sem:
             kwargs: dict = {
                 "model": self.model,
-                "max_tokens": 1024,
+                "max_tokens": max_tokens or self.DEFAULT_MAX_TOKENS,
                 "messages": [{"role": "user", "content": prompt}],
             }
             if system:
