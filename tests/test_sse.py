@@ -12,7 +12,7 @@ async def test_sse_endpoint_streams_events():
     """Integration test: POST /research returns SSE event stream."""
     call_count = 0
 
-    async def mock_generate(prompt: str, api_token: str | None = None) -> str:
+    async def mock_generate(prompt: str, api_token: str | None = None, **_kwargs: object) -> str:
         nonlocal call_count
         call_count += 1
         if call_count == 1:

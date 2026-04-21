@@ -19,7 +19,7 @@ async def test_orchestrator_full_flow():
 
     call_count = 0
 
-    async def mock_generate(prompt: str, api_token: str | None = None) -> str:
+    async def mock_generate(prompt: str, api_token: str | None = None, **_kwargs: object) -> str:
         nonlocal call_count
         call_count += 1
         if call_count == 1:
@@ -64,7 +64,7 @@ async def test_orchestrator_no_callback():
 
     call_count = 0
 
-    async def mock_generate(prompt: str, api_token: str | None = None) -> str:
+    async def mock_generate(prompt: str, api_token: str | None = None, **_kwargs: object) -> str:
         nonlocal call_count
         call_count += 1
         if call_count == 1:
@@ -92,7 +92,7 @@ async def test_orchestrator_decompose_fallback():
 
     call_count = 0
 
-    async def mock_generate(prompt: str, api_token: str | None = None) -> str:
+    async def mock_generate(prompt: str, api_token: str | None = None, **_kwargs: object) -> str:
         nonlocal call_count
         call_count += 1
         if call_count == 1:
@@ -155,7 +155,7 @@ async def test_orchestrator_emits_credibility_status():
 
     call_count = 0
 
-    async def mock_generate(prompt: str, api_token: str | None = None) -> str:
+    async def mock_generate(prompt: str, api_token: str | None = None, **_kwargs: object) -> str:
         nonlocal call_count
         call_count += 1
         if call_count == 1:
@@ -187,7 +187,7 @@ async def test_orchestrator_weak_source_warning():
 
     call_count = 0
 
-    async def mock_generate(prompt: str, api_token: str | None = None) -> str:
+    async def mock_generate(prompt: str, api_token: str | None = None, **_kwargs: object) -> str:
         nonlocal call_count
         call_count += 1
         if call_count == 1:
@@ -216,7 +216,7 @@ async def test_orchestrator_evidence_sorted_by_credibility():
     call_count = 0
     synthesis_prompt = None
 
-    async def mock_generate(prompt: str, api_token: str | None = None) -> str:
+    async def mock_generate(prompt: str, api_token: str | None = None, **_kwargs: object) -> str:
         nonlocal call_count, synthesis_prompt
         call_count += 1
         if call_count == 1:
@@ -257,7 +257,7 @@ async def test_orchestrator_corroboration_for_low_credibility():
     call_count = 0
     synthesis_prompt = None
 
-    async def mock_generate(prompt: str, api_token: str | None = None) -> str:
+    async def mock_generate(prompt: str, api_token: str | None = None, **_kwargs: object) -> str:
         nonlocal call_count, synthesis_prompt
         call_count += 1
         if call_count == 1:

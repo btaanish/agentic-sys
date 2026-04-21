@@ -47,7 +47,7 @@ def _gen_with_contradictions():
     """Side-effect generator that triggers contradiction detection."""
     call_count = 0
 
-    async def gen(prompt: str, api_token: str | None = None) -> str:
+    async def gen(prompt: str, api_token: str | None = None, **_kwargs: object) -> str:
         nonlocal call_count
         call_count += 1
         if call_count == 1:
@@ -81,7 +81,7 @@ def _gen_simple():
     """Side-effect generator for a clean single-iteration run."""
     call_count = 0
 
-    async def gen(prompt: str, api_token: str | None = None) -> str:
+    async def gen(prompt: str, api_token: str | None = None, **_kwargs: object) -> str:
         nonlocal call_count
         call_count += 1
         if call_count == 1:
@@ -133,7 +133,7 @@ async def test_result_includes_exploration_angles():
 
     synthesis_prompts: list[str] = []
 
-    async def gen(prompt: str, api_token: str | None = None) -> str:
+    async def gen(prompt: str, api_token: str | None = None, **_kwargs: object) -> str:
         if "Synthesiz" in prompt or "Original query" in prompt:
             synthesis_prompts.append(prompt)
             return "synthesized"
@@ -167,7 +167,7 @@ async def test_synthesizer_receives_credibility_scores():
 
     synthesis_prompts: list[str] = []
 
-    async def gen(prompt: str, api_token: str | None = None) -> str:
+    async def gen(prompt: str, api_token: str | None = None, **_kwargs: object) -> str:
         if "Synthesiz" in prompt or "Original query" in prompt:
             synthesis_prompts.append(prompt)
             return "synthesized"

@@ -23,13 +23,21 @@ class LLMClient:
         )
         self._sem = asyncio.Semaphore(max_concurrency)
 
-    async def generate(self, prompt: str, api_token: str | None = None) -> str:
+    async def generate(
+        self,
+        prompt: str,
+        api_token: str | None = None,
+        system: str | None = None,
+    ) -> str:
         async with self._sem:
-            message = await self._client.messages.create(
-                model=self.model,
-                max_tokens=1024,
-                messages=[{"role": "user", "content": prompt}],
-            )
+            kwargs: dict = {
+                "model": self.model,
+                "max_tokens": 1024,
+                "messages": [{"role": "user", "content": prompt}],
+            }
+            if system:
+                kwargs["system"] = system
+            message = await self._client.messages.create(**kwargs)
         return message.content[0].text
 
     async def aclose(self) -> None:

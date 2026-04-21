@@ -13,7 +13,7 @@ async def test_orchestrator_runs_agents_in_parallel():
     llm = LLMClient()
     call_count = 0
 
-    async def mock_generate(prompt: str, api_token: str | None = None) -> str:
+    async def mock_generate(prompt: str, api_token: str | None = None, **_kwargs: object) -> str:
         nonlocal call_count
         call_count += 1
         if call_count == 1:
@@ -47,7 +47,7 @@ async def test_orchestrator_populates_research_state():
 
     call_count = 0
 
-    async def mock_generate(prompt: str, api_token: str | None = None) -> str:
+    async def mock_generate(prompt: str, api_token: str | None = None, **_kwargs: object) -> str:
         nonlocal call_count
         call_count += 1
         if call_count == 1:
@@ -81,7 +81,7 @@ async def test_orchestrator_state_has_confidence_scores():
 
     call_count = 0
 
-    async def mock_generate(prompt: str, api_token: str | None = None) -> str:
+    async def mock_generate(prompt: str, api_token: str | None = None, **_kwargs: object) -> str:
         nonlocal call_count
         call_count += 1
         if call_count == 1:
@@ -115,7 +115,7 @@ async def test_orchestrator_enriched_sse_events():
 
     call_count = 0
 
-    async def mock_generate(prompt: str, api_token: str | None = None) -> str:
+    async def mock_generate(prompt: str, api_token: str | None = None, **_kwargs: object) -> str:
         nonlocal call_count
         call_count += 1
         if call_count == 1:

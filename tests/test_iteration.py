@@ -56,7 +56,7 @@ def _mock_gen_simple(
     gather_end = 1 + 4 * n_sub
     eval_end = gather_end + 4 * n_sub
 
-    async def _gen(prompt: str, api_token: str | None = None) -> str:
+    async def _gen(prompt: str, api_token: str | None = None, **_kwargs: object) -> str:
         nonlocal call_count
         call_count += 1
         if call_count == 1:
@@ -108,7 +108,7 @@ async def test_multiple_iterations_low_confidence():
     # Every credibility eval returns low score -> corroboration always needed
     call_count = 0
 
-    async def gen(prompt: str, api_token: str | None = None) -> str:
+    async def gen(prompt: str, api_token: str | None = None, **_kwargs: object) -> str:
         nonlocal call_count
         call_count += 1
         if call_count == 1:
@@ -168,7 +168,7 @@ async def test_follow_up_queries_driven_by_unresolved():
     call_count = 0
     researched_topics: list[str] = []
 
-    async def gen(prompt: str, api_token: str | None = None) -> str:
+    async def gen(prompt: str, api_token: str | None = None, **_kwargs: object) -> str:
         nonlocal call_count
         call_count += 1
         if call_count == 1:
@@ -204,7 +204,7 @@ async def test_corroboration_triggers_reresearch():
 
     call_count = 0
 
-    async def gen(prompt: str, api_token: str | None = None) -> str:
+    async def gen(prompt: str, api_token: str | None = None, **_kwargs: object) -> str:
         nonlocal call_count
         call_count += 1
         if call_count == 1:
@@ -239,7 +239,7 @@ async def test_zero_iterations_skips_loop():
 
     call_count = 0
 
-    async def gen(prompt: str, api_token: str | None = None) -> str:
+    async def gen(prompt: str, api_token: str | None = None, **_kwargs: object) -> str:
         nonlocal call_count
         call_count += 1
         if call_count == 1:
@@ -337,7 +337,7 @@ async def test_confidence_threshold_exact():
 
     call_count = 0
 
-    async def gen_low(prompt: str, api_token: str | None = None) -> str:
+    async def gen_low(prompt: str, api_token: str | None = None, **_kwargs: object) -> str:
         nonlocal call_count
         call_count += 1
         if call_count == 1:
@@ -378,7 +378,7 @@ async def test_iteration_refines_queries():
         iteration_targets.append([sq.text for _, sq in target_questions])
         return await original_gather(state, target_questions)
 
-    async def gen(prompt: str, api_token: str | None = None) -> str:
+    async def gen(prompt: str, api_token: str | None = None, **_kwargs: object) -> str:
         nonlocal call_count
         call_count += 1
         if call_count == 1:
@@ -414,7 +414,7 @@ async def test_corroboration_cleared_after_reresearch():
     call_count = 0
     iteration_num = 0
 
-    async def gen(prompt: str, api_token: str | None = None) -> str:
+    async def gen(prompt: str, api_token: str | None = None, **_kwargs: object) -> str:
         nonlocal call_count, iteration_num
         call_count += 1
         if call_count == 1:
@@ -515,7 +515,7 @@ async def test_confidence_scores_updated_each_iteration():
 
     call_count = 0
 
-    async def gen(prompt: str, api_token: str | None = None) -> str:
+    async def gen(prompt: str, api_token: str | None = None, **_kwargs: object) -> str:
         nonlocal call_count
         call_count += 1
         if call_count == 1:

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from src.agents.base import BaseAgent
@@ -7,6 +8,9 @@ from src.core.llm_client import LLMClient
 
 if TYPE_CHECKING:
     from src.core.research_state import ResearchState
+
+
+_SYSTEM_PROMPT = (Path(__file__).parent / "synthesizer.md").read_text(encoding="utf-8")
 
 
 class SynthesizerAgent(BaseAgent):
@@ -25,18 +29,4 @@ class SynthesizerAgent(BaseAgent):
             state: Optional ResearchState (not used by synthesizer but accepted for interface consistency).
             sub_question_index: Optional sub-question index (not used by synthesizer).
         """
-        prompt = (
-            f"You are a research synthesizer. Given the following research findings, "
-            f"produce a clear, well-organized, and coherent summary that answers the "
-            f"original question. Evidence is ordered by credibility score. Prioritize "
-            f"higher-credibility sources. Note any claims that rely solely on "
-            f"low-credibility sources.\n\n"
-            f"Structure your response with these sections:\n"
-            f"1. Main Findings\n"
-            f"2. Supporting Evidence\n"
-            f"3. Contradictions Found (if any contradictions are listed in the input)\n"
-            f"4. Remaining Uncertainty\n"
-            f"5. Overall Confidence\n\n"
-            f"{query}"
-        )
-        return await self.llm_client.generate(prompt, api_token=self.api_token)
+        return await self.llm_client.generate(query, api_token=self.api_token, system=_SYSTEM_PROMPT)

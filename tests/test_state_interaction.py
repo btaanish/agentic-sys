@@ -96,7 +96,7 @@ async def test_gap_detection_different_output_with_empty_vs_populated_state():
     llm = LLMClient()
     prompts_sent = []
 
-    async def capture_prompt(prompt: str, api_token=None):
+    async def capture_prompt(prompt: str, api_token=None, **_kwargs):
         prompts_sent.append(prompt)
         return "result"
 

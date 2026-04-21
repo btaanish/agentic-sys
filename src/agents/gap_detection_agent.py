@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from src.agents.base import BaseAgent
@@ -7,6 +8,9 @@ from src.core.llm_client import LLMClient
 
 if TYPE_CHECKING:
     from src.core.research_state import ResearchState
+
+
+_SYSTEM_PROMPT = (Path(__file__).parent / "gap_detection_agent.md").read_text(encoding="utf-8")
 
 
 class GapDetectionAgent(BaseAgent):
@@ -28,13 +32,8 @@ class GapDetectionAgent(BaseAgent):
             for e in state.evidence:
                 existing_coverage += f"- [{e.source}] {e.content}\n"
 
-        prompt = (
-            "You are a research assistant specializing in identifying gaps in knowledge. "
-            "For the following query, identify gaps, ambiguities, missing information, "
-            "and unanswered questions that need further investigation:\n\n"
-            f"{query}{existing_coverage}"
-        )
-        result = await self.llm_client.generate(prompt, api_token=self.api_token)
+        prompt = f"Query:\n\n{query}{existing_coverage}"
+        result = await self.llm_client.generate(prompt, api_token=self.api_token, system=_SYSTEM_PROMPT)
         if state is not None:
             state.add_evidence(result, source=self.name, confidence=0.5, sub_question_index=sub_question_index)
             state.add_unresolved(f"Gaps identified for sub-question {sub_question_index}: {result[:100]}")

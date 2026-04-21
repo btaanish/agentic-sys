@@ -159,7 +159,7 @@ async def test_exploration_angles_tracked():
 
     call_count = 0
 
-    async def gen(prompt: str, api_token: str | None = None) -> str:
+    async def gen(prompt: str, api_token: str | None = None, **_kwargs: object) -> str:
         nonlocal call_count
         call_count += 1
         if call_count == 1:
@@ -199,7 +199,7 @@ async def test_at_least_three_angles_explored():
 
     call_count = 0
 
-    async def gen(prompt: str, api_token: str | None = None) -> str:
+    async def gen(prompt: str, api_token: str | None = None, **_kwargs: object) -> str:
         nonlocal call_count
         call_count += 1
         if call_count == 1:
@@ -238,7 +238,7 @@ async def test_contradiction_detection_finds_conflicts():
 
     call_count = 0
 
-    async def gen(prompt: str, api_token: str | None = None) -> str:
+    async def gen(prompt: str, api_token: str | None = None, **_kwargs: object) -> str:
         nonlocal call_count
         call_count += 1
         if call_count == 1:
@@ -393,7 +393,7 @@ async def test_synthesis_includes_contradictions():
     call_count = 0
     synthesis_prompt_captured = []
 
-    async def gen(prompt: str, api_token: str | None = None) -> str:
+    async def gen(prompt: str, api_token: str | None = None, **_kwargs: object) -> str:
         nonlocal call_count
         call_count += 1
         if call_count == 1:
@@ -428,13 +428,12 @@ async def test_synthesis_includes_contradictions():
 
 @pytest.mark.anyio
 async def test_synthesis_prompt_has_uncertainty_section():
-    """Synthesizer prompt asks for uncertainty/confidence."""
+    """Synthesizer instructions ask for uncertainty/confidence."""
     llm = LLMClient()
-    prompts_captured: list[str] = []
-    original_generate = llm.generate
+    captured: list[str] = []
 
-    async def capture_gen(prompt: str, api_token: str | None = None) -> str:
-        prompts_captured.append(prompt)
+    async def capture_gen(prompt: str, api_token: str | None = None, system: str | None = None, **_kwargs: object) -> str:
+        captured.append((system or "") + "\n" + prompt)
         return "answer"
 
     from src.agents.synthesizer import SynthesizerAgent
@@ -443,11 +442,10 @@ async def test_synthesis_prompt_has_uncertainty_section():
     with patch.object(llm, "generate", side_effect=capture_gen):
         await synth.execute("test input")
 
-    assert len(prompts_captured) == 1
-    prompt = prompts_captured[0]
-    # The synthesizer prompt should mention uncertainty and confidence
-    assert "Uncertainty" in prompt or "uncertainty" in prompt.lower()
-    assert "Confidence" in prompt or "confidence" in prompt.lower()
+    assert len(captured) == 1
+    combined = captured[0]
+    assert "Uncertainty" in combined or "uncertainty" in combined.lower()
+    assert "Confidence" in combined or "confidence" in combined.lower()
 
 
 # ---------------------------------------------------------------------------
@@ -456,12 +454,12 @@ async def test_synthesis_prompt_has_uncertainty_section():
 
 @pytest.mark.anyio
 async def test_synthesis_includes_confidence_level():
-    """Final synthesis prompt structure includes an Overall Confidence section."""
+    """Final synthesis instructions include an Overall Confidence section."""
     llm = LLMClient()
-    prompts_captured: list[str] = []
+    captured: list[str] = []
 
-    async def capture_gen(prompt: str, api_token: str | None = None) -> str:
-        prompts_captured.append(prompt)
+    async def capture_gen(prompt: str, api_token: str | None = None, system: str | None = None, **_kwargs: object) -> str:
+        captured.append((system or "") + "\n" + prompt)
         return "answer"
 
     from src.agents.synthesizer import SynthesizerAgent
@@ -470,5 +468,4 @@ async def test_synthesis_includes_confidence_level():
     with patch.object(llm, "generate", side_effect=capture_gen):
         await synth.execute("test input")
 
-    prompt = prompts_captured[0]
-    assert "Overall Confidence" in prompt
+    assert "Overall Confidence" in captured[0]
