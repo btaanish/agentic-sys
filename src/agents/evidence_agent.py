@@ -24,9 +24,11 @@ class EvidenceAgent(BaseAgent):
         """Find specific evidence related to the query."""
         existing_context = ""
         if state is not None and state.evidence:
-            existing_context = "\n\nExisting findings to build upon:\n"
-            for e in state.evidence:
-                existing_context += f"- [{e.source}] {e.content}\n"
+            relevant = [e for e in state.evidence if e.sub_question_index == sub_question_index]
+            if relevant:
+                existing_context = "\n\nExisting findings to build upon:\n"
+                for e in relevant:
+                    existing_context += f"- [{e.source}] {e.content[:400]}\n"
 
         prompt = f"""You are an evidence-gathering research specialist. Your job is to find what is actually true about the claim below — not to argue for it, not against it.
 
