@@ -446,8 +446,9 @@ async def test_synthesis_prompt_omits_uncertainty_and_confidence_sections():
     assert len(captured) == 1
     combined = captured[0]
     # Only Main Findings and Supporting Evidence are instructed as output sections.
-    assert "### 1. Main Findings" in combined
-    assert "### 2. Supporting Evidence" in combined
+    assert "Produce exactly these two sections" in combined
+    assert "1. Main Findings" in combined
+    assert "2. Supporting Evidence" in combined
     assert "### 3. Contradictions Found" not in combined
     assert "### 4. Remaining Uncertainty" not in combined
     assert "### 5. Overall Confidence" not in combined
