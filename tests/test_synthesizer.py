@@ -29,90 +29,150 @@ async def test_synthesizer_agent_attributes():
 
 
 @pytest.mark.anyio
-async def test_synthesizer_strips_forbidden_sections_from_llm_output():
+async def test_synthesizer_drops_meta_sections_from_llm_output():
+    """Meta-sections about the research process must never reach the user."""
     llm = LLMClient()
     agent = SynthesizerAgent(llm, api_token="t")
     llm_output = (
-        "## 1. Main Findings\n"
-        "The answer is X.\n\n"
-        "## 2. Supporting Evidence\n"
-        "Source A says X.\n\n"
-        "## 3. Remaining Uncertainty\n"
-        "We don't know Y.\n\n"
-        "## 4. Overall Confidence\n"
-        "Medium. Based on one source.\n"
+        "## The topic\n"
+        "This is the substantive answer.\n\n"
+        "## Contradictions and Unresolved Tensions\n"
+        "meta-commentary about conflicts\n\n"
+        "## Remaining Uncertainty\n"
+        "meta-commentary about gaps\n\n"
+        "## Supporting Evidence\n"
+        "citation list\n\n"
+        "## Overall Confidence\n"
+        "medium\n"
     )
     with patch.object(llm, "generate", AsyncMock(return_value=llm_output)):
         result = await agent.execute("findings")
 
-    assert "Main Findings" in result
-    assert "Supporting Evidence" in result
+    assert "substantive answer" in result
+    assert "Contradictions" not in result
+    assert "Unresolved Tensions" not in result
     assert "Remaining Uncertainty" not in result
+    assert "Supporting Evidence" not in result
     assert "Overall Confidence" not in result
-    assert "We don't know Y" not in result
-    assert "Medium. Based on one source" not in result
+    assert "meta-commentary" not in result
+    assert "citation list" not in result
 
 
-def test_strip_forbidden_sections_atx_headings():
+@pytest.mark.anyio
+async def test_synthesizer_unwraps_synthesis_answer_heading():
+    """The model sometimes wraps the real answer under a meta heading like
+    'Synthesis Answer to Original Question'. The heading must be stripped
+    but the content preserved — otherwise the user sees nothing."""
+    llm = LLMClient()
+    agent = SynthesizerAgent(llm, api_token="t")
+    llm_output = (
+        "## Synthesis Answer to Original Question\n"
+        "The answer is that parallels exist and they matter for X.\n\n"
+        "Further elaboration on the topic here.\n"
+    )
+    with patch.object(llm, "generate", AsyncMock(return_value=llm_output)):
+        result = await agent.execute("findings")
+
+    assert "Synthesis Answer" not in result
+    assert "The answer is that parallels exist" in result
+    assert "Further elaboration on the topic" in result
+
+
+def test_strip_drop_section_atx_headings():
     text = (
-        "### 1. Main Findings\n"
+        "### The topic\n"
         "body1\n\n"
-        "### 2. Supporting Evidence\n"
-        "body2\n\n"
-        "### 3. Remaining Uncertainty\n"
+        "### Contradictions Found\n"
         "hidden\n\n"
-        "### 4. Overall Confidence\n"
-        "hidden too\n"
+        "### Remaining Uncertainty\n"
+        "hidden too\n\n"
+        "### Overall Confidence\n"
+        "also hidden\n"
     )
     out = _strip_forbidden_sections(text)
     assert "body1" in out
-    assert "body2" in out
     assert "hidden" not in out
+    assert "Contradictions" not in out
     assert "Remaining Uncertainty" not in out
     assert "Overall Confidence" not in out
 
 
-def test_strip_forbidden_sections_bold_headings():
+def test_strip_drop_section_bold_headings():
     text = (
-        "**1. Main Findings**\n"
+        "**The topic**\n"
         "body1\n\n"
-        "**2. Supporting Evidence**\n"
-        "body2\n\n"
-        "**Remaining Uncertainty**\n"
+        "**Supporting Evidence**\n"
         "hidden\n\n"
         "**Overall Confidence**\n"
         "hidden too\n"
     )
     out = _strip_forbidden_sections(text)
     assert "body1" in out
-    assert "body2" in out
     assert "hidden" not in out
+    assert "Supporting Evidence" not in out
 
 
-def test_strip_forbidden_sections_preserves_inline_mentions():
+def test_strip_preserves_inline_mentions():
     text = (
-        "## Main Findings\n"
-        "The remaining uncertainty is large, per source A.\n"
+        "## Part of the topic\n"
+        "There is remaining uncertainty about X, per the literature.\n"
         "Overall confidence in this claim is low.\n"
     )
     out = _strip_forbidden_sections(text)
-    # Inline mentions inside a non-forbidden section are preserved.
     assert "remaining uncertainty" in out
     assert "Overall confidence" in out
 
 
-def test_strip_forbidden_sections_forbidden_not_at_end():
+def test_strip_drop_section_not_at_end():
     text = (
-        "## Main Findings\n"
+        "## The topic\n"
         "body1\n\n"
-        "## Remaining Uncertainty\n"
+        "## Contradictions\n"
         "hidden\n\n"
-        "## Supporting Evidence\n"
+        "## Another aspect\n"
         "body2\n"
     )
     out = _strip_forbidden_sections(text)
     assert "body1" in out
     assert "body2" in out
     assert "hidden" not in out
-    assert "Remaining Uncertainty" not in out
+    assert "Contradictions" not in out
 
+
+def test_strip_unwrap_heading_preserves_content():
+    text = (
+        "## Main Findings\n"
+        "The substantive answer lives here.\n"
+        "More detail follows.\n"
+    )
+    out = _strip_forbidden_sections(text)
+    assert "Main Findings" not in out
+    assert "substantive answer" in out
+    assert "More detail follows" in out
+
+
+def test_strip_handles_synthesis_answer_variants():
+    for heading in [
+        "## Synthesis Answer",
+        "## Synthesis Answer to Original Question",
+        "## Synthesis Answer to the Original Question",
+        "**Synthesis Answer to Original Question**",
+    ]:
+        text = f"{heading}\nThe real answer.\n"
+        out = _strip_forbidden_sections(text)
+        assert "Synthesis Answer" not in out, heading
+        assert "The real answer" in out, heading
+
+
+def test_strip_drops_contradictions_and_unresolved_tensions():
+    text = (
+        "## The topic\n"
+        "body1\n\n"
+        "## Contradictions and Unresolved Tensions\n"
+        "hidden meta text\n"
+    )
+    out = _strip_forbidden_sections(text)
+    assert "body1" in out
+    assert "Contradictions" not in out
+    assert "Unresolved Tensions" not in out
+    assert "hidden meta text" not in out

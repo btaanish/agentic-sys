@@ -416,33 +416,26 @@ class ResearchOrchestrator:
             await self._emit({"event": "status", "message": "Synthesizing results"})
             synthesizer = SynthesizerAgent(self.llm_client, api_token=self.api_token)
 
-            synthesis_input = f"Original query: {query}\n\n"
+            # Build the synthesis input as plain research material grouped by
+            # sub-topic. We deliberately do NOT expose credibility scores,
+            # contradictions metadata, exploration-angle markers, or agent-name
+            # tags to the synthesizer — those are internal plumbing and leaking
+            # them into the prompt contaminates the final answer with meta-
+            # commentary about the research process. Evidence is still ranked
+            # by credibility internally so the strongest material appears first.
+            synthesis_input = f"Original question:\n{query}\n\nResearch notes:\n\n"
             for i, sq in enumerate(state.sub_questions):
                 relevant_evidence = [
                     e for e in state.evidence if e.sub_question_index == i
                 ]
-                # Rank by credibility (highest first)
                 relevant_evidence.sort(
                     key=lambda e: e.source_metadata.credibility_score if e.source_metadata else 0.5,
                     reverse=True,
                 )
-                synthesis_input += f"Sub-question {i + 1}: {sq.text}\n"
+                synthesis_input += f"Topic: {sq.text}\n"
                 for e in relevant_evidence:
-                    cred = e.source_metadata.credibility_score if e.source_metadata else 0.5
-                    synthesis_input += f"  [{e.source}] (credibility: {cred:.1f}) {e.content}\n"
+                    synthesis_input += f"{e.content}\n\n"
                 synthesis_input += "\n"
-
-            if state.contradictions:
-                synthesis_input += "Contradictions found:\n"
-                for c in state.contradictions:
-                    synthesis_input += f"  - {c['description']} (evidence IDs: {c['evidence_ids']})\n"
-                    if c.get("resolution"):
-                        rtype = c.get("resolution_type", "open")
-                        synthesis_input += f"    Resolution ({rtype}): {c['resolution']}\n"
-                synthesis_input += "\n"
-
-            if state.exploration_angles:
-                synthesis_input += f"Exploration angles covered: {', '.join(state.exploration_angles)}\n\n"
 
             final_answer = await synthesizer.execute(synthesis_input)
 

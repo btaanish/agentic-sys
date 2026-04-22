@@ -208,8 +208,11 @@ async def test_orchestrator_weak_source_warning():
 
 
 @pytest.mark.anyio
-async def test_orchestrator_evidence_sorted_by_credibility():
-    """Evidence is sorted by credibility (highest first) in synthesis input."""
+async def test_synthesis_prompt_is_free_of_credibility_and_contradiction_meta():
+    """The synthesis prompt must not surface credibility scores, contradiction
+    metadata, exploration-angle markers, or internal agent-name tags to the
+    synthesizer — those artifacts contaminate the final answer with research-
+    process meta-commentary."""
     llm = LLMClient()
     orchestrator = ResearchOrchestrator(llm, api_token="test")
 
@@ -224,11 +227,10 @@ async def test_orchestrator_evidence_sorted_by_credibility():
         elif call_count <= 6:
             return f"findings-{call_count}"
         elif call_count <= 11:
-            # Varied credibility across 5 agents
             scores = [0.9, 0.2, 0.7, 0.4, 0.6]
             idx = call_count - 7
             return f'{{"source_type": "unknown", "credibility_score": {scores[idx]}, "bias_score": 0.3, "recency_score": 0.5, "domain": "test"}}'
-        elif "Original query" in prompt:
+        elif "Original question" in prompt:
             synthesis_prompt = prompt
             return "synthesized"
         else:
@@ -237,12 +239,17 @@ async def test_orchestrator_evidence_sorted_by_credibility():
     with patch.object(llm, "generate", side_effect=mock_generate):
         await orchestrator.run("query")
 
-    # The synthesis prompt should list evidence ordered by credibility descending
     assert synthesis_prompt is not None
-    # Find credibility values in order
-    import re
-    cred_values = [float(m) for m in re.findall(r"credibility: ([\d.]+)", synthesis_prompt)]
-    assert cred_values == sorted(cred_values, reverse=True)
+    # None of these research-process artifacts may leak into the synthesizer's prompt.
+    lowered = synthesis_prompt.lower()
+    assert "credibility" not in lowered
+    assert "contradiction" not in lowered
+    assert "exploration angle" not in lowered
+    assert "[retrieval]" not in synthesis_prompt
+    assert "[context]" not in synthesis_prompt
+    assert "[evidence]" not in synthesis_prompt
+    assert "[counterexample]" not in synthesis_prompt
+    assert "[gap_detection]" not in synthesis_prompt
 
 
 @pytest.mark.anyio
@@ -264,7 +271,7 @@ async def test_orchestrator_corroboration_for_low_credibility():
         call_count += 1
         if call_count == 1:
             return '["q1"]'
-        if "Original query" in prompt:
+        if "Original question" in prompt:
             synthesis_prompt = prompt
             return "synthesized"
         if "source credibility evaluator" in prompt.lower():

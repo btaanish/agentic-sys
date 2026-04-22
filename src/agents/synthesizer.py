@@ -13,11 +13,32 @@ if TYPE_CHECKING:
 
 _SYSTEM_PROMPT = (Path(__file__).parent / "synthesizer.md").read_text(encoding="utf-8")
 
-# Sections the synthesizer must never emit. Some LLM outputs slip them in
-# despite the system prompt, so we strip them post-hoc as a guarantee.
-_FORBIDDEN_SECTION_PATTERNS = [
-    r"remaining\s+uncertainty",
-    r"overall\s+confidence",
+# Headings whose entire section (heading + content) must be dropped from the
+# final answer. These are meta-sections that comment on the research process
+# rather than the topic.
+_DROP_SECTION_PATTERNS = [
+    r"(remaining\s+)?uncertainty",
+    r"(overall\s+)?confidence",
+    r"confidence\s+level",
+    r"contradictions(\s+(found|and\s+unresolved\s+tensions?))?",
+    r"unresolved\s+tensions?",
+    r"supporting\s+evidence",
+    r"evidence(\s+summary)?",
+    r"source\s+(credibility|evaluation)",
+    r"credibility\s+(assessment|summary)",
+    r"sources?(\s+consulted)?",
+    r"references",
+    r"citations",
+]
+
+# Headings that wrap actual answer content but whose titles are meta-artifacts
+# of the research process. We drop the heading only and keep the content.
+_UNWRAP_HEADING_PATTERNS = [
+    r"synthesis\s+answer(\s+to\s+(the\s+)?original\s+question)?",
+    r"main\s+findings",
+    r"findings",
+    r"final\s+answer",
+    r"answer",
 ]
 
 
@@ -49,7 +70,7 @@ def _strip_forbidden_sections(text: str) -> str:
     i = 0
     while i < len(lines):
         is_h, level, heading_text = _is_heading(lines[i])
-        if is_h and any(re.fullmatch(p, heading_text) for p in _FORBIDDEN_SECTION_PATTERNS):
+        if is_h and any(re.fullmatch(p, heading_text) for p in _DROP_SECTION_PATTERNS):
             # Skip this heading and every following line until the next heading
             # at the same-or-higher level (lower numeric level = higher rank;
             # bolded pseudo-heading level 0 is treated as top-rank).
@@ -63,12 +84,30 @@ def _strip_forbidden_sections(text: str) -> str:
                 j += 1
             i = j
             continue
+        if is_h and any(re.fullmatch(p, heading_text) for p in _UNWRAP_HEADING_PATTERNS):
+            # Drop the heading line itself but keep the section's content.
+            i += 1
+            continue
         out.append(lines[i])
         i += 1
-    # Trim trailing blank lines left behind.
-    while out and not out[-1].strip():
-        out.pop()
-    return "\n".join(out)
+    # Collapse 3+ consecutive blank lines left behind into a single blank,
+    # and trim trailing blanks.
+    collapsed: list[str] = []
+    blank_run = 0
+    for line in out:
+        if line.strip() == "":
+            blank_run += 1
+            if blank_run <= 1:
+                collapsed.append(line)
+        else:
+            blank_run = 0
+            collapsed.append(line)
+    while collapsed and not collapsed[-1].strip():
+        collapsed.pop()
+    # Also trim leading blank lines.
+    while collapsed and not collapsed[0].strip():
+        collapsed.pop(0)
+    return "\n".join(collapsed)
 
 
 class SynthesizerAgent(BaseAgent):
