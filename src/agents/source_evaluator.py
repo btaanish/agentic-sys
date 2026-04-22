@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import uuid
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from src.agents.base import BaseAgent
@@ -10,6 +11,9 @@ from src.core.source_metadata import SourceMetadata, SourceType
 
 if TYPE_CHECKING:
     from src.core.research_state import ResearchState
+
+
+_SYSTEM_PROMPT = (Path(__file__).parent / "source_evaluator.md").read_text(encoding="utf-8")
 
 
 class SourceEvaluator(BaseAgent):
@@ -55,24 +59,20 @@ class SourceEvaluator(BaseAgent):
         Returns:
             A SourceMetadata object with credibility assessment.
         """
-        prompt = (
-            "You are a source credibility evaluator. Analyze the following evidence "
-            "and its source, then return a JSON object with these fields:\n"
-            '- "source_type": one of "academic_paper", "news_article", "blog", '
-            '"official_doc", "forum", "unknown"\n'
-            '- "credibility_score": float 0-1 (1 = highly credible)\n'
-            '- "bias_score": float 0-1 (1 = highly biased)\n'
-            '- "recency_score": float 0-1 (1 = very recent/timely)\n'
-            '- "domain": the domain or field of the source\n\n'
-            "Return ONLY valid JSON, no other text.\n\n"
-            f"Source: {evidence_source}\n"
-            f"Evidence:\n{evidence_content}"
-        )
+        prompt = f"""Source: {evidence_source}
+
+Evidence:
+{evidence_content}
+"""
 
         source_id = str(uuid.uuid4())
 
         try:
-            result = await self.llm_client.generate(prompt, api_token=self.api_token)
+            result = await self.llm_client.generate(
+                prompt,
+                api_token=self.api_token,
+                system=_SYSTEM_PROMPT,
+            )
             data = json.loads(result)
 
             source_type_str = data.get("source_type", "unknown")
