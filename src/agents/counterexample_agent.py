@@ -28,9 +28,11 @@ class CounterexampleAgent(BaseAgent):
         """Find counterexamples and opposing viewpoints for the query."""
         existing_claims = ""
         if state is not None and state.evidence:
-            existing_claims = "\n\nExisting claims to challenge:\n"
-            for e in state.evidence:
-                existing_claims += f"- [{e.source}] {e.content}\n"
+            relevant = [e for e in state.evidence if e.sub_question_index == sub_question_index]
+            if relevant:
+                existing_claims = "\n\nExisting claims to challenge:\n"
+                for e in relevant:
+                    existing_claims += f"- [{e.source}] {e.content[:400]}\n"
 
         prompt = f"Target:\n\n{query}{existing_claims}"
         result = await self.llm_client.generate(prompt, api_token=self.api_token, system=_SYSTEM_PROMPT)

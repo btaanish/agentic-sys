@@ -28,9 +28,11 @@ class GapDetectionAgent(BaseAgent):
         """Identify gaps and missing information for the query."""
         existing_coverage = ""
         if state is not None and state.evidence:
-            existing_coverage = "\n\nAlready covered:\n"
-            for e in state.evidence:
-                existing_coverage += f"- [{e.source}] {e.content}\n"
+            relevant = [e for e in state.evidence if e.sub_question_index == sub_question_index]
+            if relevant:
+                existing_coverage = "\n\nAlready covered:\n"
+                for e in relevant:
+                    existing_coverage += f"- [{e.source}] {e.content[:400]}\n"
 
         prompt = f"Query:\n\n{query}{existing_coverage}"
         result = await self.llm_client.generate(prompt, api_token=self.api_token, system=_SYSTEM_PROMPT)
