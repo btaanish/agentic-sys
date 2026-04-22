@@ -5,8 +5,8 @@ import anthropic
 
 
 class LLMClient:
-    DEFAULT_MODEL = "claude-sonnet-4-6"
-    DEFAULT_CONCURRENCY = 4
+    DEFAULT_MODEL = "claude-haiku-4-5"
+    DEFAULT_CONCURRENCY = 2
     DEFAULT_MAX_TOKENS = 1024
 
     def __init__(
