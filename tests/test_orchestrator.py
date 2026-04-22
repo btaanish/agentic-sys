@@ -25,11 +25,11 @@ async def test_orchestrator_full_flow():
         if call_count == 1:
             # Decompose call
             return '["sub-q1", "sub-q2"]'
-        elif call_count <= 9:
-            # Gather calls: 4 agents x 2 sub-questions = 8 calls
+        elif call_count <= 11:
+            # Gather calls: 5 agents x 2 sub-questions = 10 calls
             return f"findings for call {call_count}"
-        elif call_count <= 17:
-            # Source evaluator calls: 8 evidence pieces
+        elif call_count <= 21:
+            # Source evaluator calls: 10 evidence pieces
             return '{"source_type": "unknown", "credibility_score": 0.7, "bias_score": 0.3, "recency_score": 0.5, "domain": "test"}'
         else:
             # Synthesize call
@@ -39,8 +39,8 @@ async def test_orchestrator_full_flow():
         result = await orchestrator.run("test query")
 
     assert result == "final synthesized answer"
-    # 1 decompose + 8 gather (4 agents x 2 sub-q) + 8 evaluate + 1 synthesize
-    assert call_count == 18
+    # 1 decompose + 10 gather (5 agents x 2 sub-q) + 10 evaluate + 1 synthesize
+    assert call_count == 22
 
     # Check events emitted
     event_types = [e["event"] for e in events]
@@ -69,11 +69,11 @@ async def test_orchestrator_no_callback():
         call_count += 1
         if call_count == 1:
             return '["q1"]'
-        elif call_count <= 5:
-            # Gather calls: 4 agents x 1 sub-question
+        elif call_count <= 6:
+            # Gather calls: 5 agents x 1 sub-question
             return "gathered"
-        elif call_count <= 9:
-            # Source evaluator calls: 4 evidence pieces
+        elif call_count <= 11:
+            # Source evaluator calls: 5 evidence pieces
             return '{"source_type": "unknown", "credibility_score": 0.7, "bias_score": 0.3, "recency_score": 0.5, "domain": "test"}'
         else:
             return "synthesized"
@@ -97,11 +97,11 @@ async def test_orchestrator_decompose_fallback():
         call_count += 1
         if call_count == 1:
             return "not valid json"
-        elif call_count <= 5:
-            # Gather calls: 4 agents x 1 fallback sub-question
+        elif call_count <= 6:
+            # Gather calls: 5 agents x 1 fallback sub-question
             return "gathered"
-        elif call_count <= 9:
-            # Source evaluator calls: 4 evidence pieces
+        elif call_count <= 11:
+            # Source evaluator calls: 5 evidence pieces
             return '{"source_type": "unknown", "credibility_score": 0.7, "bias_score": 0.3, "recency_score": 0.5, "domain": "test"}'
         else:
             return "synthesized"
@@ -110,8 +110,8 @@ async def test_orchestrator_decompose_fallback():
         result = await orchestrator.run("original query")
 
     assert result == "synthesized"
-    # 1 decompose + 4 gather (4 agents x 1 fallback sub-q) + 4 evaluate + 1 synthesize
-    assert call_count == 10
+    # 1 decompose + 5 gather (5 agents x 1 fallback sub-q) + 5 evaluate + 1 synthesize
+    assert call_count == 12
 
 
 @pytest.mark.anyio
@@ -160,9 +160,9 @@ async def test_orchestrator_emits_credibility_status():
         call_count += 1
         if call_count == 1:
             return '["q1"]'
-        elif call_count <= 5:
+        elif call_count <= 6:
             return "gathered"
-        elif call_count <= 9:
+        elif call_count <= 11:
             return '{"source_type": "unknown", "credibility_score": 0.7, "bias_score": 0.3, "recency_score": 0.5, "domain": "test"}'
         else:
             return "synthesized"
@@ -192,9 +192,9 @@ async def test_orchestrator_weak_source_warning():
         call_count += 1
         if call_count == 1:
             return '["q1"]'
-        elif call_count <= 5:
+        elif call_count <= 6:
             return "gathered"
-        elif call_count <= 9:
+        elif call_count <= 11:
             # Return low credibility for all sources
             return '{"source_type": "blog", "credibility_score": 0.1, "bias_score": 0.8, "recency_score": 0.3, "domain": "test"}'
         else:
@@ -221,15 +221,17 @@ async def test_orchestrator_evidence_sorted_by_credibility():
         call_count += 1
         if call_count == 1:
             return '["q1"]'
-        elif call_count <= 5:
+        elif call_count <= 6:
             return f"findings-{call_count}"
-        elif call_count <= 9:
-            # Alternate high and low credibility
-            scores = [0.9, 0.2, 0.7, 0.4]
-            idx = call_count - 6
+        elif call_count <= 11:
+            # Varied credibility across 5 agents
+            scores = [0.9, 0.2, 0.7, 0.4, 0.6]
+            idx = call_count - 7
             return f'{{"source_type": "unknown", "credibility_score": {scores[idx]}, "bias_score": 0.3, "recency_score": 0.5, "domain": "test"}}'
-        else:
+        elif "Original query" in prompt:
             synthesis_prompt = prompt
+            return "synthesized"
+        else:
             return "synthesized"
 
     with patch.object(llm, "generate", side_effect=mock_generate):
@@ -262,14 +264,13 @@ async def test_orchestrator_corroboration_for_low_credibility():
         call_count += 1
         if call_count == 1:
             return '["q1"]'
-        elif call_count <= 5:
-            return "gathered"
-        elif call_count <= 9:
-            # Very low credibility triggers corroboration
-            return '{"source_type": "forum", "credibility_score": 0.2, "bias_score": 0.7, "recency_score": 0.3, "domain": "test"}'
-        else:
+        if "Original query" in prompt:
             synthesis_prompt = prompt
             return "synthesized"
+        if "source credibility evaluator" in prompt.lower():
+            # Very low credibility triggers corroboration
+            return '{"source_type": "forum", "credibility_score": 0.2, "bias_score": 0.7, "recency_score": 0.3, "domain": "test"}'
+        return "gathered"
 
     with patch.object(llm, "generate", side_effect=mock_generate):
         result = await orchestrator.run("query")

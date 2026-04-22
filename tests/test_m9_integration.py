@@ -69,7 +69,7 @@ def _gen_with_contradictions():
             }])
         if "credibility" in prompt.lower() or "source" in prompt.lower():
             # Divergent credibility to trigger contradiction detection
-            if call_count <= 6:
+            if call_count <= 9:
                 return _make_cred_json(credibility=0.95)
             return _make_cred_json(credibility=0.25)
         return "gathered evidence"
@@ -298,7 +298,7 @@ async def test_sse_agents_dispatched_contract():
     assert "agents" in data
     assert "sub_question_count" in data
     assert isinstance(data["agents"], list)
-    assert len(data["agents"]) == 4  # 4 specialized agents
+    assert len(data["agents"]) == 5  # 5 specialized agents (retrieval + 4)
     assert isinstance(data["sub_question_count"], int)
     assert data["sub_question_count"] >= 1
 

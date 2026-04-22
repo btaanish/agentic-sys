@@ -30,6 +30,7 @@ class LLMClient:
         api_token: str | None = None,
         system: str | None = None,
         max_tokens: int | None = None,
+        tools: list[dict] | None = None,
     ) -> str:
         async with self._sem:
             kwargs: dict = {
@@ -39,8 +40,14 @@ class LLMClient:
             }
             if system:
                 kwargs["system"] = system
+            if tools:
+                kwargs["tools"] = tools
             message = await self._client.messages.create(**kwargs)
-        return message.content[0].text
+        # The response may contain multiple content blocks (text interleaved
+        # with server-side tool_use / tool_result blocks when tools are enabled).
+        # Concatenate every text block so callers get the full assistant output.
+        parts = [b.text for b in message.content if getattr(b, "type", None) == "text"]
+        return "\n".join(p for p in parts if p)
 
     async def aclose(self) -> None:
         await self._client.close()

@@ -6,9 +6,12 @@ from typing import Any
 import anthropic
 
 from src.agents.context_agent import ContextAgent
+from src.agents.contradiction_resolver import ContradictionResolverAgent
 from src.agents.counterexample_agent import CounterexampleAgent
 from src.agents.evidence_agent import EvidenceAgent
 from src.agents.gap_detection_agent import GapDetectionAgent
+from src.agents.planner import PlannerAgent
+from src.agents.retrieval_agent import RetrievalAgent
 from src.agents.source_evaluator import SourceEvaluator
 from src.agents.synthesizer import SynthesizerAgent
 from src.core.llm_client import LLMClient
@@ -76,6 +79,7 @@ class ResearchOrchestrator:
     ) -> None:
         """Run gather agents and evaluate credibility for target sub-questions."""
         agents = [
+            RetrievalAgent(self.llm_client, api_token=self.api_token),
             ContextAgent(self.llm_client, api_token=self.api_token),
             EvidenceAgent(self.llm_client, api_token=self.api_token),
             CounterexampleAgent(self.llm_client, api_token=self.api_token),
@@ -214,6 +218,94 @@ class ResearchOrchestrator:
             except (json.JSONDecodeError, ValueError):
                 continue
 
+    async def _resolve_contradictions(self, state: ResearchState) -> None:
+        """Dispatch ContradictionResolverAgent on each unresolved contradiction.
+
+        Writes the resolution back onto the contradiction dict and applies any
+        declared confidence impact by down-weighting the involved evidence.
+        """
+        unresolved = [c for c in state.contradictions if not c.get("resolution")]
+        if not unresolved:
+            return
+
+        resolver = ContradictionResolverAgent(self.llm_client, api_token=self.api_token)
+        await self._emit({
+            "event": "status",
+            "message": f"Resolving {len(unresolved)} contradiction(s)",
+        })
+
+        for contradiction in unresolved:
+            evidence_ids = contradiction.get("evidence_ids", [])
+            description = contradiction.get("description", "")
+            items: list[tuple[int, str, str, float]] = []
+            for eid in evidence_ids:
+                if 0 <= eid < len(state.evidence):
+                    ev = state.evidence[eid]
+                    cred = ev.source_metadata.credibility_score if ev.source_metadata else 0.5
+                    items.append((eid, ev.source, ev.content, cred))
+            if not items:
+                continue
+
+            resolution = await resolver.resolve(description, items)
+            contradiction["resolution"] = resolution.get("explanation", "")
+            contradiction["resolution_type"] = resolution.get("resolution_type", "open")
+            contradiction["preferred_evidence_id"] = resolution.get("preferred_evidence_id")
+            impact = float(resolution.get("confidence_impact", 0.0) or 0.0)
+            impact = max(0.0, min(0.3, impact))
+            contradiction["confidence_impact"] = impact
+
+            # Clear the "Resolve contradiction: ..." next_action entry if present
+            action = f"Resolve contradiction: {description}"
+            if action in state.next_actions:
+                state.next_actions.remove(action)
+
+        await self._emit({
+            "event": "state_update",
+            "message": "Contradictions resolved",
+            "data": json.dumps({"contradictions": state.contradictions}),
+        })
+
+    async def _replan(self, state: ResearchState) -> list[int]:
+        """Apply PlannerAgent output to revise sub-questions.
+
+        Returns the list of sub-question indices that should be researched in the
+        next iteration (refinements + additions). If the planner returns no
+        changes, returns an empty list.
+        """
+        planner = PlannerAgent(self.llm_client, api_token=self.api_token)
+        plan = await planner.plan(state)
+
+        touched: list[int] = []
+
+        for ref in plan.get("refinements", []):
+            idx = ref.get("index")
+            new_text = ref.get("new_text")
+            if not isinstance(idx, int) or not isinstance(new_text, str):
+                continue
+            if 0 <= idx < len(state.sub_questions) and new_text.strip():
+                state.sub_questions[idx].text = new_text.strip()
+                state.sub_questions[idx].status = SubQuestionStatus.PENDING
+                touched.append(idx)
+
+        for add in plan.get("additions", []):
+            text = add.get("text")
+            if not isinstance(text, str) or not text.strip():
+                continue
+            state.sub_questions.append(SubQuestion(text=text.strip()))
+            touched.append(len(state.sub_questions) - 1)
+
+        if touched:
+            await self._emit({
+                "event": "state_update",
+                "message": "Plan revised",
+                "data": json.dumps({
+                    "refinements": plan.get("refinements", []),
+                    "additions": plan.get("additions", []),
+                    "sub_questions": [sq.text for sq in state.sub_questions],
+                }),
+            })
+        return touched
+
     async def run(self, query: str) -> str:
         """Run the full research pipeline with iterative refinement."""
         try:
@@ -240,12 +332,16 @@ class ResearchOrchestrator:
                     # First iteration: all sub-questions
                     target_questions = list(enumerate(state.sub_questions))
                 else:
-                    # Subsequent iterations: only sub-questions needing corroboration
+                    # Subsequent iterations: planner-revised targets, falling back
+                    # to corroboration-needed sub-questions if the planner had
+                    # no changes.
+                    planner_targets = await self._replan(state)
                     corroboration_indices = self._check_corroboration(state)
-                    if not corroboration_indices:
+                    target_indices = sorted(set(planner_targets) | set(corroboration_indices))
+                    if not target_indices:
                         break
                     target_questions = [
-                        (i, state.sub_questions[i]) for i in corroboration_indices
+                        (i, state.sub_questions[i]) for i in target_indices
                     ]
                     # Clear processed corroboration requests
                     state.next_actions = [
@@ -255,8 +351,9 @@ class ResearchOrchestrator:
 
                 await self._gather_and_evaluate(state, target_questions)
 
-                # Detect contradictions
+                # Detect and resolve contradictions
                 await self._detect_contradictions(state)
+                await self._resolve_contradictions(state)
 
                 # Track new angles for subsequent iterations
                 if iteration > 0:
@@ -339,6 +436,9 @@ class ResearchOrchestrator:
                 synthesis_input += "Contradictions found:\n"
                 for c in state.contradictions:
                     synthesis_input += f"  - {c['description']} (evidence IDs: {c['evidence_ids']})\n"
+                    if c.get("resolution"):
+                        rtype = c.get("resolution_type", "open")
+                        synthesis_input += f"    Resolution ({rtype}): {c['resolution']}\n"
                 synthesis_input += "\n"
 
             if state.exploration_angles:

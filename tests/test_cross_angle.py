@@ -253,7 +253,7 @@ async def test_contradiction_detection_finds_conflicts():
             return "synthesized"
         if "credibility" in prompt.lower() or "source" in prompt.lower():
             # Return divergent credibility to trigger contradiction detection
-            if call_count <= 6:
+            if call_count <= 9:
                 return _make_cred_json(credibility=0.9)
             return _make_cred_json(credibility=0.3)
         return "gathered"
@@ -408,7 +408,7 @@ async def test_synthesis_includes_contradictions():
             return "synthesized with contradictions noted"
         if "credibility" in prompt.lower() or "source" in prompt.lower():
             # Return divergent credibility to trigger contradiction detection
-            if call_count <= 6:
+            if call_count <= 9:
                 return _make_cred_json(credibility=0.95)
             return _make_cred_json(credibility=0.3)
         return "gathered"

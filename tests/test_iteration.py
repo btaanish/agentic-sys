@@ -50,11 +50,11 @@ def _mock_gen_simple(
 ):
     """Return a side_effect function for a single-iteration, n_sub-question run.
 
-    Call sequence: 1 decompose + 4*n_sub gather + 4*n_sub evaluate + 1 synthesize.
+    Call sequence: 1 decompose + 5*n_sub gather + 5*n_sub evaluate + 1 synthesize.
     """
     call_count = 0
-    gather_end = 1 + 4 * n_sub
-    eval_end = gather_end + 4 * n_sub
+    gather_end = 1 + 5 * n_sub
+    eval_end = gather_end + 5 * n_sub
 
     async def _gen(prompt: str, api_token: str | None = None, **_kwargs: object) -> str:
         nonlocal call_count
@@ -422,8 +422,8 @@ async def test_corroboration_cleared_after_reresearch():
         if "Synthesiz" in prompt or "Original query" in prompt:
             return "synthesized"
         if "credibility" in prompt.lower() or "source" in prompt.lower():
-            # Return low on first iteration, high on second
-            if call_count <= 10:
+            # Return low on first iteration, high on subsequent
+            if call_count <= 11:
                 return LOW_CRED
             return HIGH_CRED
         return "gathered"

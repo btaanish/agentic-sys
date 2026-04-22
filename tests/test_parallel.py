@@ -9,7 +9,7 @@ from src.core.llm_client import LLMClient
 
 @pytest.mark.anyio
 async def test_orchestrator_runs_agents_in_parallel():
-    """Verify that all 4 agents run for each sub-question (parallel via gather)."""
+    """Verify that all 5 agents run for each sub-question (parallel via gather)."""
     llm = LLMClient()
     call_count = 0
 
@@ -18,10 +18,10 @@ async def test_orchestrator_runs_agents_in_parallel():
         call_count += 1
         if call_count == 1:
             return '["sq1", "sq2"]'
-        elif call_count <= 9:
+        elif call_count <= 11:
             return f"agent result {call_count}"
-        elif call_count <= 17:
-            # Source evaluator calls: 8 evidence pieces
+        elif call_count <= 21:
+            # Source evaluator calls: 10 evidence pieces
             return '{"source_type": "unknown", "credibility_score": 0.7, "bias_score": 0.3, "recency_score": 0.5, "domain": "test"}'
         else:
             return "final answer"
@@ -32,8 +32,8 @@ async def test_orchestrator_runs_agents_in_parallel():
         result = await orchestrator.run("test query")
 
     assert result == "final answer"
-    # 1 decompose + 4 agents * 2 sub-questions + 8 evaluate + 1 synthesize = 18
-    assert call_count == 18
+    # 1 decompose + 5 agents * 2 sub-questions + 10 evaluate + 1 synthesize = 22
+    assert call_count == 22
 
 
 @pytest.mark.anyio
@@ -52,7 +52,7 @@ async def test_orchestrator_populates_research_state():
         call_count += 1
         if call_count == 1:
             return '["sq1"]'
-        elif call_count <= 5:
+        elif call_count <= 6:
             return f"evidence {call_count}"
         else:
             return "synthesis"
@@ -86,7 +86,7 @@ async def test_orchestrator_state_has_confidence_scores():
         call_count += 1
         if call_count == 1:
             return '["sq1"]'
-        elif call_count <= 5:
+        elif call_count <= 6:
             return "findings"
         else:
             return "final"
@@ -100,8 +100,8 @@ async def test_orchestrator_state_has_confidence_scores():
     assert len(research_complete) == 1
     data = json.loads(research_complete[0]["data"])
     assert "confidence_scores" in data
-    # 4 agents add evidence with confidence 0.7, 0.8, 0.6, 0.5 → avg 0.65
-    assert data["confidence_scores"]["0"] == pytest.approx(0.65)
+    # 5 agents add evidence: retrieval 0.85, context 0.7, evidence 0.8, counterexample 0.6, gap 0.5 → avg 0.69
+    assert data["confidence_scores"]["0"] == pytest.approx(0.69)
 
 
 @pytest.mark.anyio
@@ -120,7 +120,7 @@ async def test_orchestrator_enriched_sse_events():
         call_count += 1
         if call_count == 1:
             return '["sq1", "sq2"]'
-        elif call_count <= 9:
+        elif call_count <= 11:
             return "data"
         else:
             return "answer"
