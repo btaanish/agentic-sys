@@ -113,7 +113,7 @@ async def test_multiple_iterations_low_confidence():
         call_count += 1
         if call_count == 1:
             return '["sub-q1"]'
-        if "Synthesiz" in prompt or "synthesize" in prompt.lower() or "Original query" in prompt:
+        if "Synthesiz" in prompt or "synthesize" in prompt.lower() or "Original question" in prompt:
             return "synthesized"
         # Source evaluator calls get low credibility
         if "credibility" in prompt.lower() or "source" in prompt.lower():
@@ -173,7 +173,7 @@ async def test_follow_up_queries_driven_by_unresolved():
         call_count += 1
         if call_count == 1:
             return '["sub-q1"]'
-        if "Synthesiz" in prompt or "Original query" in prompt:
+        if "Synthesiz" in prompt or "Original question" in prompt:
             return "synthesized"
         if "credibility" in prompt.lower() or "source" in prompt.lower():
             return LOW_CRED  # low credibility triggers corroboration
@@ -209,7 +209,7 @@ async def test_corroboration_triggers_reresearch():
         call_count += 1
         if call_count == 1:
             return '["sub-q1"]'
-        if "Synthesiz" in prompt or "Original query" in prompt:
+        if "Synthesiz" in prompt or "Original question" in prompt:
             return "synthesized"
         if "credibility" in prompt.lower() or "source" in prompt.lower():
             return _make_cred_json(credibility=0.2)
@@ -342,7 +342,7 @@ async def test_confidence_threshold_exact():
         call_count += 1
         if call_count == 1:
             return '["sub-q1"]'
-        if "Synthesiz" in prompt or "Original query" in prompt:
+        if "Synthesiz" in prompt or "Original question" in prompt:
             return "synthesized"
         if "credibility" in prompt.lower() or "source" in prompt.lower():
             return LOW_CRED
@@ -383,7 +383,7 @@ async def test_iteration_refines_queries():
         call_count += 1
         if call_count == 1:
             return '["sub-q1", "sub-q2"]'
-        if "Synthesiz" in prompt or "Original query" in prompt:
+        if "Synthesiz" in prompt or "Original question" in prompt:
             return "synthesized"
         if "credibility" in prompt.lower() or "source" in prompt.lower():
             return LOW_CRED
@@ -419,7 +419,7 @@ async def test_corroboration_cleared_after_reresearch():
         call_count += 1
         if call_count == 1:
             return '["sub-q1"]'
-        if "Synthesiz" in prompt or "Original query" in prompt:
+        if "Synthesiz" in prompt or "Original question" in prompt:
             return "synthesized"
         if "credibility" in prompt.lower() or "source" in prompt.lower():
             # Return low on first iteration, high on subsequent
@@ -520,7 +520,7 @@ async def test_confidence_scores_updated_each_iteration():
         call_count += 1
         if call_count == 1:
             return '["sub-q1"]'
-        if "Synthesiz" in prompt or "Original query" in prompt:
+        if "Synthesiz" in prompt or "Original question" in prompt:
             return "synthesized"
         if "credibility" in prompt.lower() or "source" in prompt.lower():
             return LOW_CRED

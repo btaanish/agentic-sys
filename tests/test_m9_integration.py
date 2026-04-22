@@ -53,7 +53,7 @@ def _gen_with_contradictions():
         if call_count == 1:
             return '["sub-q1"]'
         # Synthesis prompt comes after contradiction detection
-        if "Synthesiz" in prompt or "Original query" in prompt:
+        if "Synthesiz" in prompt or "Original question" in prompt:
             return (
                 "## Main Findings\nKey finding here.\n"
                 "## Evidence\nEvidence details.\n"
@@ -88,7 +88,7 @@ def _gen_simple():
             return '["sub-q1"]'
         if "contradict" in prompt.lower():
             return "[]"
-        if "Synthesiz" in prompt or "Original query" in prompt:
+        if "Synthesiz" in prompt or "Original question" in prompt:
             return "final synthesized answer"
         if "credibility" in prompt.lower() or "source" in prompt.lower():
             return HIGH_CRED
@@ -102,12 +102,14 @@ def _gen_simple():
 # ===========================================================================
 
 # ---------------------------------------------------------------------------
-# 1a. Orchestrator result includes contradiction descriptions
+# 1a. Final result is free of research-process meta-sections
 # ---------------------------------------------------------------------------
 
 @pytest.mark.anyio
-async def test_result_includes_contradiction_info():
-    """When contradictions exist, the final result mentions them."""
+async def test_result_is_free_of_meta_sections():
+    """The final answer must not contain research-process meta-sections.
+    Contradictions, uncertainty, and confidence are internal concerns —
+    they must never surface as standalone sections in the user-facing output."""
     llm = LLMClient()
     events, cb = _collector()
     orch = ResearchOrchestrator(llm, api_token="t", callback=cb, max_iterations=1)
@@ -115,18 +117,24 @@ async def test_result_includes_contradiction_info():
     with patch.object(llm, "generate", side_effect=_gen_with_contradictions()):
         result = await orch.run("query with conflict")
 
-    # The synthesis input includes "Contradictions found:" when contradictions exist
-    # and the synthesizer echoes it back in the result
-    assert "Contradictions" in result or "contradiction" in result.lower()
+    # The post-processor must drop the meta-section headings the synthesizer
+    # sometimes slips in despite the system prompt.
+    assert "## Contradictions" not in result
+    assert "## Uncertainty" not in result
+    assert "## Confidence" not in result
+    assert "## Evidence" not in result
+    assert "## Main Findings" not in result
+    assert "Overall Confidence" not in result
 
 
 # ---------------------------------------------------------------------------
-# 1b. Result includes exploration angles covered
+# 1b. Synthesis prompt is free of exploration-angle markers
 # ---------------------------------------------------------------------------
 
 @pytest.mark.anyio
-async def test_result_includes_exploration_angles():
-    """Final synthesis input includes exploration angles covered."""
+async def test_synthesis_prompt_omits_exploration_angles():
+    """The synthesizer must not receive an 'Exploration angles covered:' line —
+    that is research-process plumbing that contaminates the final answer."""
     llm = LLMClient()
     events, cb = _collector()
     orch = ResearchOrchestrator(llm, api_token="t", callback=cb, max_iterations=1)
@@ -134,14 +142,13 @@ async def test_result_includes_exploration_angles():
     synthesis_prompts: list[str] = []
 
     async def gen(prompt: str, api_token: str | None = None, **_kwargs: object) -> str:
-        if "Synthesiz" in prompt or "Original query" in prompt:
+        if "Original question" in prompt:
             synthesis_prompts.append(prompt)
             return "synthesized"
         if "contradict" in prompt.lower():
             return "[]"
         if "credibility" in prompt.lower() or "source" in prompt.lower():
             return HIGH_CRED
-        # First call is decompose
         if not synthesis_prompts and "Break down" in prompt:
             return '["sub-q1"]'
         return "gathered"
@@ -149,18 +156,20 @@ async def test_result_includes_exploration_angles():
     with patch.object(llm, "generate", side_effect=gen):
         await orch.run("test query")
 
-    # The orchestrator appends "Exploration angles covered: ..." to synthesis input
     assert len(synthesis_prompts) >= 1
-    assert "Exploration angles covered" in synthesis_prompts[0]
+    assert "Exploration angles" not in synthesis_prompts[0]
+    assert "exploration angle" not in synthesis_prompts[0].lower()
 
 
 # ---------------------------------------------------------------------------
-# 1c. Synthesizer receives structured input with credibility scores
+# 1c. Synthesis prompt is free of credibility scores
 # ---------------------------------------------------------------------------
 
 @pytest.mark.anyio
-async def test_synthesizer_receives_credibility_scores():
-    """Synthesis input includes per-evidence credibility scores."""
+async def test_synthesis_prompt_omits_credibility_scores():
+    """The synthesizer must not see per-evidence credibility scores —
+    exposing them nudges the model toward credibility-weighting language
+    that the user never asked for."""
     llm = LLMClient()
     events, cb = _collector()
     orch = ResearchOrchestrator(llm, api_token="t", callback=cb, max_iterations=1)
@@ -168,7 +177,7 @@ async def test_synthesizer_receives_credibility_scores():
     synthesis_prompts: list[str] = []
 
     async def gen(prompt: str, api_token: str | None = None, **_kwargs: object) -> str:
-        if "Synthesiz" in prompt or "Original query" in prompt:
+        if "Original question" in prompt:
             synthesis_prompts.append(prompt)
             return "synthesized"
         if "contradict" in prompt.lower():
@@ -183,8 +192,7 @@ async def test_synthesizer_receives_credibility_scores():
         await orch.run("test query")
 
     assert len(synthesis_prompts) >= 1
-    # Credibility appears as "(credibility: X.X)" in synthesis input
-    assert "credibility:" in synthesis_prompts[0].lower()
+    assert "credibility" not in synthesis_prompts[0].lower()
 
 
 # ===========================================================================

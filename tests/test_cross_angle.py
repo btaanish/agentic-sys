@@ -166,7 +166,7 @@ async def test_exploration_angles_tracked():
             return '["sub-q1"]'
         if "contradict" in prompt.lower():
             return "[]"
-        if "Synthesiz" in prompt or "Original query" in prompt:
+        if "Synthesiz" in prompt or "Original question" in prompt:
             return "synthesized"
         if "credibility" in prompt.lower() or "source" in prompt.lower():
             return HIGH_CRED
@@ -206,7 +206,7 @@ async def test_at_least_three_angles_explored():
             return '["sub-q1"]'
         if "contradict" in prompt.lower():
             return "[]"
-        if "Synthesiz" in prompt or "Original query" in prompt:
+        if "Synthesiz" in prompt or "Original question" in prompt:
             return "synthesized"
         if "credibility" in prompt.lower() or "source" in prompt.lower():
             return HIGH_CRED
@@ -249,7 +249,7 @@ async def test_contradiction_detection_finds_conflicts():
                 "evidence_indices": [0, 1],
                 "description": "Source A claims X while Source B claims not X",
             }])
-        if "Synthesiz" in prompt or "Original query" in prompt:
+        if "Synthesiz" in prompt or "Original question" in prompt:
             return "synthesized"
         if "credibility" in prompt.lower() or "source" in prompt.lower():
             # Return divergent credibility to trigger contradiction detection
@@ -427,9 +427,11 @@ async def test_synthesis_includes_contradictions():
 # ---------------------------------------------------------------------------
 
 @pytest.mark.anyio
-async def test_synthesis_prompt_omits_uncertainty_and_confidence_sections():
-    """Synthesizer instructions must not request standalone uncertainty or
-    confidence sections — those concerns are surfaced inline in Main Findings."""
+async def test_synthesis_prompt_forbids_meta_sections():
+    """Synthesizer instructions must forbid research-process meta-sections
+    (Contradictions, Remaining Uncertainty, Overall Confidence, Supporting
+    Evidence, Main Findings, etc.) so the final answer reads as a unified
+    piece about the topic rather than as a research report about research."""
     llm = LLMClient()
     captured: list[str] = []
 
@@ -444,14 +446,21 @@ async def test_synthesis_prompt_omits_uncertainty_and_confidence_sections():
         await synth.execute("test input")
 
     assert len(captured) == 1
-    combined = captured[0]
-    # Only Main Findings and Supporting Evidence are instructed as output sections.
-    assert "Produce exactly these two sections" in combined
-    assert "1. Main Findings" in combined
-    assert "2. Supporting Evidence" in combined
-    assert "### 3. Contradictions Found" not in combined
-    assert "### 4. Remaining Uncertainty" not in combined
-    assert "### 5. Overall Confidence" not in combined
+    system_prompt = captured[0]
+    # The system prompt must explicitly forbid the meta-section headings
+    # that have leaked into past outputs.
+    for forbidden in [
+        "Contradictions",
+        "Unresolved Tensions",
+        "Remaining Uncertainty",
+        "Overall Confidence",
+        "Synthesis Answer",
+        "Supporting Evidence",
+        "Main Findings",
+    ]:
+        assert forbidden in system_prompt, f"prompt does not forbid {forbidden!r}"
+    # And the prompt must direct the model to open with the answer, not a preamble.
+    assert "No preamble" in system_prompt or "no preamble" in system_prompt.lower()
 
 
 # ---------------------------------------------------------------------------
