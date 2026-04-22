@@ -149,13 +149,6 @@ document.addEventListener("DOMContentLoaded", function () {
       var topic = msg.slice("Researching sub-topic:".length).trim();
       return { key: "research:" + topic, label: "Researching — " + topic };
     }
-    if (msg.indexOf("Evaluating source credibility") === 0) {
-      return { key: "credibility", label: "Evaluating source credibility" };
-    }
-    var iter = msg.match(/^Iteration (\d+)\/(\d+) complete/);
-    if (iter) {
-      return { key: "iter:" + iter[1], label: "Iteration " + iter[1] + " of " + iter[2] + " complete" };
-    }
     if (msg.indexOf("Synthesizing") === 0) {
       return { key: "synthesize", label: "Synthesizing results" };
     }
