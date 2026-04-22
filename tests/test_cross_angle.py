@@ -423,12 +423,13 @@ async def test_synthesis_includes_contradictions():
 
 
 # ---------------------------------------------------------------------------
-# 14. Synthesizer prompt has uncertainty section
+# 14. Synthesizer prompt omits separate uncertainty/confidence sections
 # ---------------------------------------------------------------------------
 
 @pytest.mark.anyio
-async def test_synthesis_prompt_has_uncertainty_section():
-    """Synthesizer instructions ask for uncertainty/confidence."""
+async def test_synthesis_prompt_omits_uncertainty_and_confidence_sections():
+    """Synthesizer instructions must not request standalone uncertainty or
+    confidence sections — those concerns are surfaced inline in Main Findings."""
     llm = LLMClient()
     captured: list[str] = []
 
@@ -444,17 +445,21 @@ async def test_synthesis_prompt_has_uncertainty_section():
 
     assert len(captured) == 1
     combined = captured[0]
-    assert "Uncertainty" in combined or "uncertainty" in combined.lower()
-    assert "Confidence" in combined or "confidence" in combined.lower()
+    # Only Main Findings and Supporting Evidence are instructed as output sections.
+    assert "### 1. Main Findings" in combined
+    assert "### 2. Supporting Evidence" in combined
+    assert "### 3. Contradictions Found" not in combined
+    assert "### 4. Remaining Uncertainty" not in combined
+    assert "### 5. Overall Confidence" not in combined
 
 
 # ---------------------------------------------------------------------------
-# 15. Synthesis includes confidence level
+# 15. Synthesis omits Overall Confidence section
 # ---------------------------------------------------------------------------
 
 @pytest.mark.anyio
-async def test_synthesis_includes_confidence_level():
-    """Final synthesis instructions include an Overall Confidence section."""
+async def test_synthesis_omits_overall_confidence():
+    """Final synthesis instructions must not ask for an Overall Confidence section."""
     llm = LLMClient()
     captured: list[str] = []
 
@@ -468,4 +473,4 @@ async def test_synthesis_includes_confidence_level():
     with patch.object(llm, "generate", side_effect=capture_gen):
         await synth.execute("test input")
 
-    assert "Overall Confidence" in captured[0]
+    assert "### 5. Overall Confidence" not in captured[0]
